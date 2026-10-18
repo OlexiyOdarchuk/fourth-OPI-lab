@@ -1,19 +1,29 @@
 #include "../include/report_writer.h"
 
-bool needsRides(ReportType type) {
+#include <cmath>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <string>
+
+bool needsRides(ReportType type)
+{
     return type == ReportType::All || type == ReportType::Rides;
 }
 
-bool needsRevenue(ReportType type) {
+bool needsRevenue(ReportType type)
+{
     return type == ReportType::All || type == ReportType::Revenue;
 }
 
-bool needsDrivers(ReportType type) {
+bool needsDrivers(ReportType type)
+{
     return type == ReportType::All || type == ReportType::Drivers;
 }
 
 template <typename T>
-bool readNumber(const std::string& prompt, T& value, T min) {
+bool readNumber(const std::string &prompt, T &value, T min)
+{
     std::string line;
 
     while (true) {
@@ -27,7 +37,8 @@ bool readNumber(const std::string& prompt, T& value, T min) {
         T number{};
         char extra;
 
-        if ((input >> number) && !(input >> extra) && std::isfinite(static_cast<double>(number)) &&number >= min) {
+        if ((input >> number) && !(input >> extra) &&
+            std::isfinite(static_cast<double>(number)) && number >= min) {
             value = number;
             return true;
         }
@@ -36,11 +47,13 @@ bool readNumber(const std::string& prompt, T& value, T min) {
     }
 }
 
-bool isLeapYear(int year) {
+bool isLeapYear(int year)
+{
     return year % 400 == 0 || (year % 4 == 0 && year % 100 != 0);
 }
 
-bool parseDate(const std::string& text, Date& date) {
+bool parseDate(const std::string &text, Date &date)
+{
     if (text.size() != 10 || text[2] != '-' || text[5] != '-') {
         return false;
     }
@@ -64,10 +77,7 @@ bool parseDate(const std::string& text, Date& date) {
         return false;
     }
 
-    const int daysInMonth[] = {
-        31, 28, 31, 30, 31, 30,
-        31, 31, 30, 31, 30, 31
-    };
+    const int daysInMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
     int maxDay = daysInMonth[result.month - 1];
 
@@ -83,22 +93,23 @@ bool parseDate(const std::string& text, Date& date) {
     return true;
 }
 
-int dateKey(const Date& date) {
-    return date.year * 10000 + date.month * 100 + date.day;
+int dateKey(const Date &date)
+{
+    return date.year * 10'000 + date.month * 100 + date.day;
 }
 
-std::string formatDate(const Date& date) {
+std::string formatDate(const Date &date)
+{
     std::ostringstream output;
 
-    output << std::setfill('0')
-           << std::setw(2) << date.day << '-'
-           << std::setw(2) << date.month << '-'
-           << std::setw(4) << date.year;
+    output << std::setfill('0') << std::setw(2) << date.day << '-'
+           << std::setw(2) << date.month << '-' << std::setw(4) << date.year;
 
     return output.str();
 }
 
-bool readDate(const std::string& prompt, Date& date) {
+bool readDate(const std::string &prompt, Date &date)
+{
     std::string line;
 
     while (true) {
@@ -116,7 +127,8 @@ bool readDate(const std::string& prompt, Date& date) {
     }
 }
 
-bool readYesNo(const std::string& prompt, bool& answer) {
+bool readYesNo(const std::string &prompt, bool &answer)
+{
     std::string input;
 
     while (true) {
@@ -141,7 +153,8 @@ bool readYesNo(const std::string& prompt, bool& answer) {
 }
 
 // Введення параметрів звіту
-bool getReportParams(ReportParams& params) {
+bool getReportParams(ReportParams &params)
+{
     std::cout << "\nОберіть тип звіту:\n"
               << "1. Усі показники\n"
               << "2. Замовлення\n"
@@ -151,15 +164,15 @@ bool getReportParams(ReportParams& params) {
     int choice = 0;
 
     while (true) {
-    if (!readNumber("Ваш вибір (1-4): ", choice, 1)) {
-        return false;
-    }
+        if (!readNumber("Ваш вибір (1-4): ", choice, 1)) {
+            return false;
+        }
 
-    if (choice <= 4) {
-        break;
-    }
+        if (choice <= 4) {
+            break;
+        }
 
-    std::cout << "Оберіть пункт від 1 до 4.\n";
+        std::cout << "Оберіть пункт від 1 до 4.\n";
     }
 
     params.type = static_cast<ReportType>(choice);
@@ -182,14 +195,13 @@ bool getReportParams(ReportParams& params) {
 }
 
 // Введення вихідних даних відокремлене від обчислень
-bool readReportData(const ReportParams& params, ReportData& data) {
+bool readReportData(const ReportParams &params, ReportData &data)
+{
     data = ReportData{};
 
     std::cout << "\nВводьте дані лише за обраний період.\n";
 
-    if (!readYesNo(
-            "Є дані для обраного звіту? (y/n): ",
-            data.hasData)) {
+    if (!readYesNo("Є дані для обраного звіту? (y/n): ", data.hasData)) {
         return false;
     }
 
@@ -198,9 +210,7 @@ bool readReportData(const ReportParams& params, ReportData& data) {
     }
 
     if (needsRides(params.type)) {
-        if (!readNumber(
-                "Кількість виконаних замовлень: ",
-                data.rideCount, 0)) {
+        if (!readNumber("Кількість виконаних замовлень: ", data.rideCount, 0)) {
             return false;
         }
     }
@@ -214,16 +224,14 @@ bool readReportData(const ReportParams& params, ReportData& data) {
     }
 
     if (needsDrivers(params.type)) {
-        if (!readNumber(
-                "Кількість водіїв, які працювали за період: ",
-                data.totalDrivers, 0)) {
+        if (!readNumber("Кількість водіїв, які працювали за період: ",
+                        data.totalDrivers, 0)) {
             return false;
         }
 
         if (data.totalDrivers > 0) {
-            if (!readNumber(
-                    "Сумарний час усіх водіїв на лінії (год): ",
-                    data.totalHours, 0.0)) {
+            if (!readNumber("Сумарний час усіх водіїв на лінії (год): ",
+                            data.totalHours, 0.0)) {
                 return false;
             }
 
@@ -248,7 +256,8 @@ bool readReportData(const ReportParams& params, ReportData& data) {
 }
 
 // Обробка даних без введення та виведення
-Report generateReport(const ReportData& data) {
+Report generateReport(const ReportData &data)
+{
     Report report;
 
     if (!data.hasData) {
@@ -261,23 +270,23 @@ Report generateReport(const ReportData& data) {
     report.totalDrivers = data.totalDrivers;
 
     if (data.totalHours > 0.0) {
-        report.driverWorkload =
-            data.busyHours / data.totalHours * 100.0;
+        report.driverWorkload = data.busyHours / data.totalHours * 100.0;
     }
 
     return report;
 }
 
 // Виведення результату
-void printReport(const ReportParams& params, const Report& report, const ReportData& data) {
+void printReport(const ReportParams &params, const Report &report,
+                 const ReportData &data)
+{
     if (!report.hasData) {
         std::cout << "\nЗа обраний період дані відсутні.\n"
                   << "Можете сформувати звіт з іншими параметрами.\n";
         return;
     }
 
-    std::cout << "\nЗвіт за період "
-              << formatDate(params.startDate) << " - "
+    std::cout << "\nЗвіт за період " << formatDate(params.startDate) << " - "
               << formatDate(params.endDate) << ":\n";
 
     if (needsRides(params.type)) {
@@ -285,8 +294,7 @@ void printReport(const ReportParams& params, const Report& report, const ReportD
     }
 
     if (needsRevenue(params.type)) {
-        std::cout << "Виручка: "
-                  << std::fixed << std::setprecision(2)
+        std::cout << "Виручка: " << std::fixed << std::setprecision(2)
                   << report.revenue << " грн\n";
     }
 
@@ -294,37 +302,11 @@ void printReport(const ReportParams& params, const Report& report, const ReportD
         std::cout << "Водіїв за період: " << report.totalDrivers << '\n';
 
         if (data.totalHours > 0.0) {
-            std::cout << "Завантаженість водіїв: "
-                      << std::fixed << std::setprecision(1)
-                      << report.driverWorkload << "%\n";
+            std::cout << "Завантаженість водіїв: " << std::fixed
+                      << std::setprecision(1) << report.driverWorkload << "%\n";
         } else {
             std::cout << "Завантаженість не визначено: "
                       << "час на лінії дорівнює нулю.\n";
-        }
-    }
-}
-
-int main() {
-    std::cout << "Авторизація успішна.\n";
-
-    while (true) {
-        ReportParams params;
-        ReportData data;
-
-        if (!getReportParams(params) ||
-            !readReportData(params, data)) {
-            std::cout << "\nВведення завершено. Звіт не сформовано.\n";
-            break;
-        }
-
-        const Report report = generateReport(data);
-        printReport(params, report, data);
-
-        bool repeat = false;
-
-        if (!readYesNo("\nСформувати інший звіт? (y/n): ", repeat) ||
-            !repeat) {
-            break;
         }
     }
 }
