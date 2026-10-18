@@ -98,7 +98,7 @@ void printReport(const ReportParams& params, const Report& report) {
 }
 
 int main() {
-    std::cout << "Авторизація успішна. Вітаємо, Диспетчер!\n\n";
+    std::cout << "Авторизація успішна.\n\n";
 
     ReportParams params;
     Report report;
