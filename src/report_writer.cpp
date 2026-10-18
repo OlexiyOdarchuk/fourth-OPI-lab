@@ -68,16 +68,12 @@ bool readNumber(const std::string& prompt, T& value, T min) {
         T number{};
         char extra;
 
-        if ((input >> number) &&
-            !(input >> extra) &&
-            std::isfinite(static_cast<double>(number)) &&
-            number >= min) {
+        if ((input >> number) && !(input >> extra) && std::isfinite(static_cast<double>(number)) &&number >= min) {
             value = number;
             return true;
         }
 
-        std::cout << "Помилка: введіть число не менше "
-                  << min << ".\n";
+        std::cout << "Помилка: введіть число не менше " << min << ".\n";
     }
 }
 
@@ -315,8 +311,7 @@ Report generateReport(const ReportData& data) {
 }
 
 // Виведення результату
-void printReport(const ReportParams& params, const Report& report,
-                 const ReportData& data) {
+void printReport(const ReportParams& params, const Report& report, const ReportData& data) {
     if (!report.hasData) {
         std::cout << "\nЗа обраний період дані відсутні.\n"
                   << "Можете сформувати звіт з іншими параметрами.\n";
