@@ -251,12 +251,11 @@ bool readReportData(const ReportParams& params, ReportData& data) {
 Report generateReport(const ReportData& data) {
     Report report;
 
-    report.hasData = data.hasData;
-
     if (!data.hasData) {
         return report;
     }
 
+    report.hasData = data.hasData;
     report.rideCount = data.rideCount;
     report.revenue = data.revenue;
     report.totalDrivers = data.totalDrivers;
