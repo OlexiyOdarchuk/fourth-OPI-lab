@@ -1,0 +1,33 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 80
+BreakBeforeBraces: Linux
+PointerAlignment: Right
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortEnumsOnASingleLine: false
+AllowShortLambdasOnASingleLine: Empty
+IndentCaseLabels: true
+SortIncludes:
+  Enabled: true
+  IgnoreCase: false
+AlignConsecutiveMacros: Consecutive
+InsertBraces: true
+InsertNewlineAtEOF: true
+LineEnding: LF
+SeparateDefinitionBlocks: Always
+KeepEmptyLines:
+  AtStartOfBlock: false
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: "^<.*>"
+    Priority: 1
+  - Regex: '^".*"'
+    Priority: 2
+IntegerLiteralSeparator:
+  Decimal: 3
+  DecimalMinDigitsInsert: 5
