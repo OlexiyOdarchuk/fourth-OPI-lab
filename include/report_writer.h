@@ -1,9 +1,4 @@
 #pragma once
-
-#include <cmath>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
 #include <string>
 
 enum class ReportType {
@@ -43,10 +38,13 @@ struct Report {
     double driverWorkload = 0.0;
 };
 
-bool getReportParams(ReportParams& params);
+bool getReportParams(ReportParams &params);
 
-bool readReportData(const ReportParams& params, ReportData& data);
+bool readReportData(const ReportParams &params, ReportData &data);
 
-Report generateReport(const ReportData& data);
+Report generateReport(const ReportData &data);
 
-void printReport(const ReportParams& params, const Report& report, const ReportData& data);
+void printReport(const ReportParams &params, const Report &report,
+                 const ReportData &data);
+
+bool readYesNo(const std::string &prompt, bool &answer);

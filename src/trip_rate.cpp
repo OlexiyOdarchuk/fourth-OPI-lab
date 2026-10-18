@@ -83,7 +83,7 @@ RatingResult processRatingData(const RatingInput &input)
 bool inputRatingData(RatingInput &input)
 {
     std::cout << "==================================================\n";
-    std::cout << "  АС «ВИКЛИК ТАКСІ» — МОДУЛЬ ОЦІНЮВАННЯ ПОЇЗДКИ   \n";
+    std::cout << "  АС «ВИКЛИК ТАКСІ» - МОДУЛЬ ОЦІНЮВАННЯ ПОЇЗДКИ   \n";
     std::cout << "==================================================\n\n";
 
     std::cout << "Введіть ID водія (наприклад, DRV-1042): ";
@@ -118,8 +118,8 @@ bool inputRatingData(RatingInput &input)
 
     std::cout << "\nОберіть компліменти (можна декілька через пробіл, "
                  "закінчіть '0'):\n";
-    std::cout << "  1 — Охайне авто | 2 — Ввічливість | 3 — Комфорт | 4 — "
-                 "Швидкість | 0 — Завершити\n";
+    std::cout << "  1 - Охайне авто | 2 - Ввічливість | 3 - Комфорт | 4 - "
+                 "Швидкість | 0 - Завершити\n";
 
     int choice;
     while (std::cin >> choice && choice != 0) {
@@ -170,20 +170,7 @@ void printRatingReceipt(const RatingInput &input, const RatingResult &result)
 
     if (result.tierMeta.isWarningIssued) {
         std::cout
-            << "\n [УВАГА!] Рейтинг нижче 4.50 — надіслано попередження!\n";
+            << "\n [УВАГА!] Рейтинг нижче 4.50 - надіслано попередження!\n";
     }
     std::cout << "========================================================\n";
-}
-
-int main()
-{
-    RatingInput input;
-    if (!inputRatingData(input)) {
-        std::cerr << "\n[ПОМИЛКА] Некоректні вхідні дані.\n";
-        return 1;
-    }
-
-    RatingResult result = processRatingData(input);
-    printRatingReceipt(input, result);
-    return 0;
 }
