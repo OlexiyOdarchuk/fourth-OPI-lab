@@ -1,10 +1,8 @@
-use std::{
-    fmt,
-    io::{self, Write},
-    str::FromStr,
-};
+use std::{fmt, str::FromStr};
 
 use chrono::NaiveDate;
+
+use crate::input::read_line;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ReportType {
@@ -59,17 +57,6 @@ pub struct Report {
     revenue: f64,
     total_drivers: i64,
     drivers_workload: Option<f64>,
-}
-
-fn read_line(prompt: &str) -> Option<String> {
-    print!("{prompt}");
-    io::stdout().flush().ok()?;
-
-    let mut input = String::new();
-    if io::stdin().read_line(&mut input).ok()? == 0 {
-        return None;
-    }
-    Some(input.trim().to_string())
 }
 
 fn read_number<T>(prompt: &str, min: T) -> Option<T>
@@ -237,4 +224,25 @@ pub fn print_report(params: &ReportParams, report: Option<(&Report, &ReportData)
             println!("Завантаженість не визначено: час на лінії дорівнює 0");
         }
     }
+}
+
+pub fn run() {
+    while let Some(params) = get_report_params() {
+        let Some(data) = get_report_data(&params) else {
+            break;
+        };
+
+        if let Some(report_data) = &data {
+            let report = generate_report(report_data);
+            print_report(&params, Some((&report, report_data)));
+        } else {
+            print_report(&params, None);
+        }
+
+        if read_yes_no("\nСформувати інший звіт? (y/n): ") != Some(true) {
+            break;
+        }
+    }
+
+    println!("\nВведення завершено.");
 }
