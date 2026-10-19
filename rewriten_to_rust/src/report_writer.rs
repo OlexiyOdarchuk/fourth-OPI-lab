@@ -62,7 +62,7 @@ pub struct Report {
 }
 
 fn read_line(prompt: &str) -> Option<String> {
-    print!("{}", prompt);
+    print!("{prompt}");
     io::stdout().flush().ok()?;
 
     let mut input = String::new();
@@ -78,10 +78,10 @@ where
 {
     loop {
         let line = read_line(prompt)?;
-        if let Ok(val) = line.parse::<T>() {
-            if val >= min {
-                return Some(val);
-            }
+        if let Ok(val) = line.parse::<T>()
+            && val >= min
+        {
+            return Some(val);
         }
         println!("Помилка: введіть число не менше {min}");
     }
@@ -129,7 +129,7 @@ pub fn get_report_params() -> Option<ReportParams> {
         if end >= start_date {
             break end;
         }
-        println!("Дата завершення не можу бути раніше дати початку")
+        println!("Дата завершення не можу бути раніше дати початку");
     };
 
     Some(ReportParams {

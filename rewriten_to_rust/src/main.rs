@@ -7,30 +7,19 @@ use report_writer::{
 fn main() {
     println!("Авторизація успішна");
 
-    loop {
-        let params = match get_report_params() {
-            Some(p) => p,
-            None => break,
+    while let Some(params) = get_report_params() {
+        let Some(data) = get_report_data(&params) else {
+            break;
         };
 
-        let data = match get_report_data(&params) {
-            Some(d) => d,
-            None => break,
-        };
-
-        if let Some(ref report_data) = data {
+        if let Some(report_data) = &data {
             let report = generate_report(report_data);
             print_report(&params, Some((&report, report_data)));
         } else {
             print_report(&params, None);
         }
 
-        let repeat = match read_yes_no("\nСформувати інший звіт? (y/n): ") {
-            Some(val) => val,
-            None => break,
-        };
-
-        if !repeat {
+        if read_yes_no("\nСформувати інший звіт? (y/n): ") != Some(true) {
             break;
         }
     }
