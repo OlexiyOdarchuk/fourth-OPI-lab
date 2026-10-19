@@ -1,4 +1,4 @@
-#include "../include/trip_rate.h"
+#include "trip_rate.h"
 
 #include <cmath>
 #include <iomanip>

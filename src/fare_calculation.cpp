@@ -1,4 +1,4 @@
-#include "../include/fare_calculation.h"
+#include "fare_calculation.h"
 
 #include <algorithm>
 #include <iomanip>
@@ -222,18 +222,4 @@ void printTripReceipt(const TripRequest &req, const FareCalculationResult &res)
         << "================================================================\n";
     std::cout << " Електронний чек дійсний для бухгалтерії та гарантійних "
                  "випадків.\n\n";
-}
-
-int main()
-{
-    TripRequest req;
-    if (!inputTripData(req)) {
-        std::cerr << "\n[ЗБІЙ] Помилка вводу параметрів розрахунку вартості.\n";
-        return 1;
-    }
-
-    FareCalculationResult result = processFareCalculation(req);
-    printTripReceipt(req, result);
-
-    return 0;
 }

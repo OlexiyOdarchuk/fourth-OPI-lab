@@ -1,5 +1,6 @@
-#include <string>
 #pragma once
+
+#include <string>
 
 struct TariffPlan {
     std::string name;    // econom class

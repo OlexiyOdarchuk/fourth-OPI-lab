@@ -1,8 +1,21 @@
 #include <iostream>
 #include <limits>
 
+#include "fare_calculation.h"
 #include "report_writer.h"
 #include "trip_rate.h"
+
+void runFareCalculation()
+{
+    TripRequest req;
+    if (!inputTripData(req)) {
+        std::cerr << "\n[ЗБІЙ] Помилка вводу параметрів розрахунку вартості.\n";
+        return;
+    }
+
+    FareCalculationResult result = processFareCalculation(req);
+    printTripReceipt(req, result);
+}
 
 void runRatingModule()
 {
@@ -51,6 +64,7 @@ int main()
         std::cout << "=================================\n";
         std::cout << "1. Розрахунок рейтингу та чек\n";
         std::cout << "2. Генерація звітів\n";
+        std::cout << "3. Обрахунок вартості поїздки\n";
         std::cout << "0. Вихід\n";
         std::cout << "---------------------------------\n";
         std::cout << "Оберіть дію: ";
@@ -70,6 +84,11 @@ int main()
             case 2:
                 std::cout << "\n--- [ МОДУЛЬ: ЗВІТИ ] ---\n";
                 runReportModule();
+                break;
+            case 3:
+                std::cout
+                    << "\n--- [ МОДУЛЬ: РОЗРАХУНОК ВАРТОСТІ ПОЇЗДКИ ] ---\n";
+                runFareCalculation();
                 break;
             case 0:
                 std::cout << "\nРоботу завершено.\n";
