@@ -1,28 +1,37 @@
-pub mod report_writer;
+mod input;
+mod report_writer;
+mod trip_rate;
 
-use report_writer::{
-    generate_report, get_report_data, get_report_params, print_report, read_yes_no,
-};
+use input::read_line;
 
 fn main() {
-    println!("Авторизація успішна");
+    loop {
+        println!("\n=================================");
+        println!("      СИСТЕМА TAXI MANAGEMENT    ");
+        println!("=================================");
+        println!("1. Розрахунок рейтингу та чек");
+        println!("2. Генерація звітів");
+        println!("0. Вихід");
+        println!("---------------------------------");
 
-    while let Some(params) = get_report_params() {
-        let Some(data) = get_report_data(&params) else {
+        let Some(line) = read_line("Оберіть дію: ") else {
             break;
         };
 
-        if let Some(report_data) = &data {
-            let report = generate_report(report_data);
-            print_report(&params, Some((&report, report_data)));
-        } else {
-            print_report(&params, None);
-        }
-
-        if read_yes_no("\nСформувати інший звіт? (y/n): ") != Some(true) {
-            break;
+        match line.parse::<u32>() {
+            Ok(1) => {
+                println!("\n--- [ МОДУЛЬ: ОЦІНКА ПОЇЗДКИ ] ---");
+                trip_rate::run();
+            }
+            Ok(2) => {
+                println!("\n--- [ МОДУЛЬ: ЗВІТИ ] ---");
+                report_writer::run();
+            }
+            Ok(0) => break,
+            Ok(_) => println!("\n[ПОМИЛКА] Невідома опція. Спробуйте ще раз."),
+            Err(_) => println!("\n[ПОМИЛКА] Введіть числову опцію."),
         }
     }
 
-    println!("\nВведення завершено.");
+    println!("\nРоботу завершено.");
 }
