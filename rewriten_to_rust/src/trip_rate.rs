@@ -4,7 +4,7 @@ use crate::input::read_line;
 
 // Категорії компліментів від пасажира
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Compliment {
+enum Compliment {
     CleanCar,      //< Чисте та охайне авто
     PoliteDriver,  //< Ввічливий та уважний водій
     SmoothDriving, //< Плавне та безпечне водіння
@@ -41,7 +41,7 @@ impl TryFrom<u32> for Compliment {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum DriverTier {
+enum DriverTier {
     Platinum, // Платиновий водій (найвищий рейтинг)
     Gold,     // Золотий водій
     Standard, // Стандартний водій
@@ -49,15 +49,15 @@ pub enum DriverTier {
 }
 
 // Метадані про сервісний рівень водія
-pub struct TierMeta {
-    pub name: &'static str, // Текстова назва рівня (наприклад, "Platinum Tier")
-    pub badge_title: &'static str, // Опис статусного бейджа
-    pub dispatch_bonus_percent: f64, // Відсоток пріоритету в розподілі замовлень
-    pub is_warning_issued: bool, // Прапорець критичного зниження рейтингу нижче порогу
+struct TierMeta {
+    name: &'static str,          // Текстова назва рівня (наприклад, "Platinum Tier")
+    badge_title: &'static str,   // Опис статусного бейджа
+    dispatch_bonus_percent: f64, // Відсоток пріоритету в розподілі замовлень
+    is_warning_issued: bool,     // Прапорець критичного зниження рейтингу нижче порогу
 }
 
 impl DriverTier {
-    pub fn from_rating(rating: f64) -> Self {
+    fn from_rating(rating: f64) -> Self {
         match rating {
             r if r >= 4.90 => Self::Platinum,
             r if r >= 4.75 => Self::Gold,
@@ -66,7 +66,7 @@ impl DriverTier {
         }
     }
 
-    pub fn meta(self) -> TierMeta {
+    fn meta(self) -> TierMeta {
         match self {
             Self::Platinum => TierMeta {
                 name: "Платиновий водій (Platinum Tier)",
@@ -104,18 +104,18 @@ impl fmt::Display for DriverTier {
 
 // Вхідні дані для збору фідбеку про поїздку
 #[derive(Debug)]
-pub struct RatingInput {
-    pub driver_id: String,            // Унікальний ID водія (наприклад, DRV-1042)
-    pub driver_name: String,          // Повне ім'я водія
-    pub current_rating: f64,          // Поточний рейтинг водія (від 1.0 до 5.0)
-    pub total_previous_trips: u32,    // Кількість вже оцінених поїздок до цього
-    pub trip_stars: u32,              // Оцінка нової поїздки (від 1 до 5 зірок)
-    pub compliments: Vec<Compliment>, // Список обраних компліментів (множинний вибір)
-    pub comment: String,              // Текстовий відгук або побажання від клієнта
+struct RatingInput {
+    driver_id: String,            // Унікальний ID водія (наприклад, DRV-1042)
+    driver_name: String,          // Повне ім'я водія
+    current_rating: f64,          // Поточний рейтинг водія (від 1.0 до 5.0)
+    total_previous_trips: u32,    // Кількість вже оцінених поїздок до цього
+    trip_stars: u32,              // Оцінка нової поїздки (від 1 до 5 зірок)
+    compliments: Vec<Compliment>, // Список обраних компліментів (множинний вибір)
+    comment: String,              // Текстовий відгук або побажання від клієнта
 }
 
 impl RatingInput {
-    pub fn read_from_stdin() -> Option<Self> {
+    fn read_from_stdin() -> Option<Self> {
         println!("==================================================");
         println!("  АС «ВИКЛИК ТАКСІ» - МОДУЛЬ ОЦІНЮВАННЯ ПОЇЗДКИ   ");
         println!("==================================================\n");
@@ -189,16 +189,16 @@ impl RatingInput {
 
 // Результат перерахунку рейтингу та аналізу фідбеку
 #[derive(Debug)]
-pub struct RatingResult {
-    pub old_rating: f64,         // Попередній рейтинг водія
-    pub new_rating: f64,         // Оновлений кумулятивний рейтинг
-    pub rating_delta: f64,       // Зміна рейтингу (+/-)
-    pub updated_trip_count: u32, // Загальна кількість оцінених поїздок (+1)
-    pub tier: DriverTier,        // Призначений кваліфікаційний рівень
+struct RatingResult {
+    old_rating: f64,         // Попередній рейтинг водія
+    new_rating: f64,         // Оновлений кумулятивний рейтинг
+    rating_delta: f64,       // Зміна рейтингу (+/-)
+    updated_trip_count: u32, // Загальна кількість оцінених поїздок (+1)
+    tier: DriverTier,        // Призначений кваліфікаційний рівень
 }
 
 impl RatingResult {
-    pub fn process(input: &RatingInput) -> Self {
+    fn process(input: &RatingInput) -> Self {
         let old_rating = input.current_rating;
         let new_rating = if input.total_previous_trips == 0 {
             input.trip_stars as f64
@@ -218,7 +218,7 @@ impl RatingResult {
         }
     }
 
-    pub fn print_receipt(&self, input: &RatingInput) {
+    fn print_summary(&self, input: &RatingInput) {
         let meta = self.tier.meta();
 
         println!("\n========================================================");
@@ -286,5 +286,5 @@ pub fn run() {
     };
 
     let result = RatingResult::process(&input);
-    result.print_receipt(&input);
+    result.print_summary(&input);
 }
