@@ -5,7 +5,7 @@ use chrono::NaiveDate;
 use crate::input::read_line;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ReportType {
+enum ReportType {
     All = 1,
     Rides,
     Revenue,
@@ -38,13 +38,13 @@ impl TryFrom<i64> for ReportType {
     }
 }
 
-pub struct ReportParams {
+struct ReportParams {
     report_type: ReportType,
     start_date: NaiveDate,
     end_date: NaiveDate,
 }
 
-pub struct ReportData {
+struct ReportData {
     ride_count: usize,
     revenue: f64,
     total_drivers: i64,
@@ -52,7 +52,7 @@ pub struct ReportData {
     busy_hours: f64,
 }
 
-pub struct Report {
+struct Report {
     ride_count: usize,
     revenue: f64,
     total_drivers: i64,
@@ -84,7 +84,7 @@ fn read_date(prompt: &str) -> Option<NaiveDate> {
     }
 }
 
-pub fn read_yes_no(prompt: &str) -> Option<bool> {
+fn read_yes_no(prompt: &str) -> Option<bool> {
     loop {
         let input = read_line(prompt)?;
         match input.to_lowercase().as_str() {
@@ -95,7 +95,7 @@ pub fn read_yes_no(prompt: &str) -> Option<bool> {
     }
 }
 
-pub fn get_report_params() -> Option<ReportParams> {
+fn get_report_params() -> Option<ReportParams> {
     println!(
         "\nОберіть тип звіту:\n1. Усі показники\n2. Замовлення\n3. Виручка\n4. Завантаженість водіїв"
     );
@@ -126,7 +126,7 @@ pub fn get_report_params() -> Option<ReportParams> {
     })
 }
 
-pub fn get_report_data(params: &ReportParams) -> Option<Option<ReportData>> {
+fn get_report_data(params: &ReportParams) -> Option<Option<ReportData>> {
     println!("Вводьте дані за обраний період");
 
     let has_data = read_yes_no("Є дані для обраного звіту? (y/n): ")?;
@@ -173,7 +173,7 @@ pub fn get_report_data(params: &ReportParams) -> Option<Option<ReportData>> {
     }))
 }
 
-pub fn generate_report(data: &ReportData) -> Report {
+fn generate_report(data: &ReportData) -> Report {
     let drivers_workload = if data.total_hours > 0.0 {
         Some((data.busy_hours / data.total_hours) * 100.0)
     } else {
@@ -188,7 +188,7 @@ pub fn generate_report(data: &ReportData) -> Report {
     }
 }
 
-pub fn print_report(params: &ReportParams, report: Option<(&Report, &ReportData)>) {
+fn print_report(params: &ReportParams, report: Option<(&Report, &ReportData)>) {
     let (report, data) = match report {
         Some(val) => val,
         None => {

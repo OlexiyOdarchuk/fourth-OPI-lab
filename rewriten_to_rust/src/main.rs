@@ -1,3 +1,4 @@
+mod fare_calculation;
 mod input;
 mod report_writer;
 mod trip_rate;
@@ -9,8 +10,9 @@ fn main() {
         println!("\n=================================");
         println!("      СИСТЕМА TAXI MANAGEMENT    ");
         println!("=================================");
-        println!("1. Розрахунок рейтингу та чек");
+        println!("1. Оцінювання поїздки");
         println!("2. Генерація звітів");
+        println!("3. Обрахунок вартості поїздки");
         println!("0. Вихід");
         println!("---------------------------------");
 
@@ -26,6 +28,10 @@ fn main() {
             Ok(2) => {
                 println!("\n--- [ МОДУЛЬ: ЗВІТИ ] ---");
                 report_writer::run();
+            }
+            Ok(3) => {
+                println!("\n--- [ МОДУЛЬ: ОБРАХУНОК ВАРТОСТІ ПОЇЗДКИ ] ---");
+                fare_calculation::run();
             }
             Ok(0) => break,
             Ok(_) => println!("\n[ПОМИЛКА] Невідома опція. Спробуйте ще раз."),
