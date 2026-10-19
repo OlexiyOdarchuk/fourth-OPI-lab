@@ -1,7 +1,11 @@
 [package]
-name = "rewriten_to_rust"
+name = "taxi_app"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 chrono = "0.4"
+cxx = "1.0.205"
+
+[build-dependencies]
+cxx-build = "1.0.205"
