@@ -2,7 +2,7 @@ use crate::input::read_line;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum CarClass {
+pub(crate) enum CarClass {
     Economy,
     Standard,
     Comfort,
@@ -22,41 +22,45 @@ impl fmt::Display for CarClass {
 }
 
 #[derive(Debug, Clone, Copy)]
-struct Position {
-    x: f64,
-    y: f64,
+pub(crate) struct Position {
+    pub(crate) x: f64,
+    pub(crate) y: f64,
 }
 
 impl Position {
-    fn distance(&self, other: &Position) -> f64 {
+    pub(crate) fn distance(&self, other: &Position) -> f64 {
         ((other.x - self.x).powi(2) + (other.y - self.y).powi(2)).sqrt()
     }
 }
 
-fn estimated_time(dist: f64) -> f64 {
+pub(crate) fn estimated_time(dist: f64) -> f64 {
     const MINUTES_IN_HOUR: f64 = 60.0;
     let avg_speed: f64 = 35.0;
     (dist / avg_speed) * MINUTES_IN_HOUR
 }
 
-struct Driver {
-    id: String,
-    name: String,
+pub(crate) struct Driver {
+    pub(crate) id: String,
+    pub(crate) name: String,
     car_model: String,
     car_plate: String,
     car_class: CarClass,
     is_available: bool,
-    rating: f64,
+    pub(crate) rating: f64,
+    pub(crate) total_trips: u32, // Кількість оцінених поїздок
     pos: Position,
 }
 
-struct Order {
-    order_id: String,
-    pos: Position,
-    desired_class: CarClass,
+pub(crate) struct Order {
+    pub(crate) order_id: String,
+    pub(crate) pos: Position,
+    pub(crate) desired_class: CarClass,
 }
 
-fn candidate_drivers() -> Vec<Driver> {
+// Радіус пошуку вільного водія
+pub(crate) const SEARCH_RADIUS_KM: f64 = 10.0;
+
+pub(crate) fn candidate_drivers() -> Vec<Driver> {
     vec![
         Driver {
             id: String::from("DRV-1001"),
@@ -66,6 +70,7 @@ fn candidate_drivers() -> Vec<Driver> {
             car_class: CarClass::Economy,
             is_available: true,
             rating: 4.92,
+            total_trips: 318,
             pos: Position { x: 2.5, y: 3.1 },
         },
         Driver {
@@ -76,6 +81,7 @@ fn candidate_drivers() -> Vec<Driver> {
             car_class: CarClass::Business,
             is_available: false,
             rating: 4.37,
+            total_trips: 57,
             pos: Position { x: 1.2, y: 0.8 },
         },
         Driver {
@@ -86,6 +92,7 @@ fn candidate_drivers() -> Vec<Driver> {
             car_class: CarClass::Comfort,
             is_available: true,
             rating: 4.67,
+            total_trips: 146,
             pos: Position { x: 4.2, y: 4.9 },
         },
         Driver {
@@ -96,6 +103,7 @@ fn candidate_drivers() -> Vec<Driver> {
             car_class: CarClass::Comfort,
             is_available: true,
             rating: 4.72,
+            total_trips: 89,
             pos: Position { x: 8.0, y: 1.3 },
         },
         Driver {
@@ -106,6 +114,7 @@ fn candidate_drivers() -> Vec<Driver> {
             car_class: CarClass::Economy,
             is_available: true,
             rating: 4.52,
+            total_trips: 23,
             pos: Position { x: 4.5, y: 3.1 },
         },
         Driver {
@@ -116,12 +125,13 @@ fn candidate_drivers() -> Vec<Driver> {
             car_class: CarClass::Standard,
             is_available: true,
             rating: 4.99,
+            total_trips: 512,
             pos: Position { x: 1.5, y: 7.1 },
         },
     ]
 }
 
-fn match_driver<'a>(
+pub(crate) fn match_driver<'a>(
     candidates: &'a [Driver],
     order: &Order,
     max_range: f64,
@@ -155,7 +165,7 @@ fn match_driver<'a>(
 }
 
 // Читає число (координата може бути від'ємною); Не коректне введення - None
-fn read_coordinate(prompt: &str) -> Option<f64> {
+pub(crate) fn read_coordinate(prompt: &str) -> Option<f64> {
     let value = read_line(prompt)?
         .parse::<f64>()
         .ok()
@@ -166,11 +176,7 @@ fn read_coordinate(prompt: &str) -> Option<f64> {
     value
 }
 
-fn read_order() -> Option<Order> {
-    println!("==================================================");
-    println!("     АС «ВИКЛИК ТАКСІ» - МОДУЛЬ ПІДБОРУ ВОДІЯ     ");
-    println!("==================================================\n");
-
+pub(crate) fn read_order() -> Option<Order> {
     let order_id = read_line("Введіть номер замовлення (наприклад, ORD-7789): ")?;
     if order_id.is_empty() {
         return None;
@@ -203,7 +209,7 @@ fn read_order() -> Option<Order> {
     })
 }
 
-fn print_match_result(order: &Order, result: Option<(&Driver, f64, f64)>) {
+pub(crate) fn print_match_result(order: &Order, result: Option<(&Driver, f64, f64)>) {
     println!("\n========================================================");
     println!("               РЕЗУЛЬТАТ ПІДБОРУ ВОДІЯ                  ");
     println!("========================================================");
@@ -237,7 +243,9 @@ fn print_match_result(order: &Order, result: Option<(&Driver, f64, f64)>) {
 }
 
 pub fn run() {
-    const SEARCH_RADIUS_KM: f64 = 10.0;
+    println!("==================================================");
+    println!("     АС «ВИКЛИК ТАКСІ» - МОДУЛЬ ПІДБОРУ ВОДІЯ     ");
+    println!("==================================================\n");
 
     let Some(order) = read_order() else {
         eprintln!("\n[ПОМИЛКА] Некоректні вхідні дані замовлення.");

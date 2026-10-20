@@ -4,7 +4,7 @@ use crate::input::read_line;
 mod ffi {
     // Тарифний план поїздки
     enum Tariff {
-        Econom = 1,
+        Economy = 1,
         Standard = 2,
         Comfort = 3,
         Business = 4,
@@ -61,35 +61,48 @@ mod ffi {
     }
 }
 
+pub(crate) use ffi::Tariff;
+
 // Дані замовлення разом із параметрами для розрахунку
-struct TripOrder {
-    order_id: String,
-    passenger_phone: String,
-    request: ffi::TripRequest,
+pub(crate) struct TripOrder {
+    pub(crate) order_id: String,
+    pub(crate) passenger_phone: String,
+    pub(crate) request: ffi::TripRequest,
 }
 
 pub fn run() {
+    println!("========================================================");
+    println!(" АС «ВИКЛИК ТАКСІ» — МОДУЛЬ ТАРИФІКАЦІЇ ТА ОПЛАТИ (UC6) ");
+    println!("========================================================\n");
+
     let Some(order) = read_trip_order() else {
         eprintln!("\n[ЗБІЙ] Помилка вводу параметрів розрахунку вартості.");
         return;
     };
 
+    settle(&order);
+}
+
+// Розраховує вартість і друкує чек; повертає суму до оплати в копійках
+pub(crate) fn settle(order: &TripOrder) -> Option<i64> {
     match ffi::process_fare_calculation(&order.request) {
-        Ok(result) => print_receipt(&order, &result),
-        Err(err) => eprintln!("\n[ЗБІЙ] Внутрішня помилка модуля розрахунку: {err}"),
+        Ok(result) => {
+            print_receipt(order, &result);
+            Some(result.final_payable_amount)
+        }
+        Err(err) => {
+            eprintln!("\n[ПОМИЛКА] Розрахунок вартості неможливий: {err}.");
+            None
+        }
     }
 }
 
 fn read_trip_order() -> Option<TripOrder> {
-    println!("========================================================");
-    println!(" АС «ВИКЛИК ТАКСІ» — МОДУЛЬ ТАРИФІКАЦІЇ ТА ОПЛАТИ (UC6) ");
-    println!("========================================================\n");
-
     let order_id = read_line("Введіть номер замовлення (наприклад, ORD-7789): ")?;
     if order_id.is_empty() {
         return None;
     }
-    let passenger_phone = read_line("Введіть телефон пасажира (+380...): ")?;
+    let passenger_phone = read_line("Введіть номер телефону пасажира (+380...): ")?;
 
     println!("\nОберіть тарифний план поїздки:");
     println!("  1 — Економ   (подача 55 грн, 9.50 грн/км, 1.80 грн/хв, мін. 80 грн)");
@@ -97,10 +110,10 @@ fn read_trip_order() -> Option<TripOrder> {
     println!("  3 — Комфорт  (подача 85 грн, 14.00 грн/км, 2.50 грн/хв, мін. 120 грн)");
     println!("  4 — Бізнес   (подача 140 грн, 22.00 грн/км, 4.50 грн/хв, мін. 200 грн)");
     let tariff = match read_line("Ваш вибір (1-4): ")?.parse::<u32>() {
-        Ok(1) => ffi::Tariff::Econom,
-        Ok(3) => ffi::Tariff::Comfort,
-        Ok(4) => ffi::Tariff::Business,
-        _ => ffi::Tariff::Standard,
+        Ok(1) => Tariff::Economy,
+        Ok(3) => Tariff::Comfort,
+        Ok(4) => Tariff::Business,
+        _ => Tariff::Standard,
     };
 
     let distance_km = read_positive(
@@ -112,6 +125,19 @@ fn read_trip_order() -> Option<TripOrder> {
         "[ПОМИЛКА] Тривалість поїздки має бути додатною.",
     )?;
 
+    Some(TripOrder {
+        order_id,
+        passenger_phone,
+        request: read_trip_request(tariff, distance_km, duration_minutes)?,
+    })
+}
+
+// Читає коефіцієнт попиту, промокод і спосіб оплати для вже відомого маршруту
+pub(crate) fn read_trip_request(
+    tariff: Tariff,
+    distance_km: f64,
+    duration_minutes: f64,
+) -> Option<ffi::TripRequest> {
     let surge_multiplier =
         read_line("Введіть коефіцієнт завантаженості / попиту (1.0 — норма, до 2.5): ")?
             .parse::<f64>()
@@ -119,8 +145,10 @@ fn read_trip_order() -> Option<TripOrder> {
             .filter(|v| v.is_finite() && *v >= 1.0 && *v <= 2.5)
             .unwrap_or(1.0);
 
+    // Регістр зводиться тут: toupper у C++ не змінює кирилицю
     let mut promo_code =
-        read_line("Введіть промокод на знижку (наприклад, KNU2026, або '-' якщо немає): ")?;
+        read_line("Введіть промокод на знижку (наприклад, KNU2026, або '-' якщо немає): ")?
+            .to_uppercase();
     if promo_code.is_empty() {
         promo_code = "-".to_string();
     }
@@ -135,17 +163,13 @@ fn read_trip_order() -> Option<TripOrder> {
         _ => ffi::PaymentMethod::Card,
     };
 
-    Some(TripOrder {
-        order_id,
-        passenger_phone,
-        request: ffi::TripRequest {
-            tariff,
-            distance_km,
-            duration_minutes,
-            surge_multiplier,
-            promo_code,
-            payment_method,
-        },
+    Some(ffi::TripRequest {
+        tariff,
+        distance_km,
+        duration_minutes,
+        surge_multiplier,
+        promo_code,
+        payment_method,
     })
 }
 

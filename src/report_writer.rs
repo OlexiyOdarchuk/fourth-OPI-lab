@@ -1,8 +1,9 @@
-use std::{fmt, str::FromStr};
+use std::{collections::HashSet, fmt, str::FromStr};
 
 use chrono::NaiveDate;
 
 use crate::input::read_line;
+use crate::order_flow::CompletedRide;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ReportType {
@@ -101,7 +102,7 @@ fn get_report_params() -> Option<ReportParams> {
     );
 
     let choice: i64 = loop {
-        let num = read_number("Ваш вибір (1-4)", 1)?;
+        let num = read_number("Ваш вибір (1-4): ", 1)?;
         if (1..=4).contains(&num) {
             break num;
         }
@@ -116,7 +117,7 @@ fn get_report_params() -> Option<ReportParams> {
         if end >= start_date {
             break end;
         }
-        println!("Дата завершення не можу бути раніше дати початку");
+        println!("Дата завершення не може бути раніше дати початку");
     };
 
     Some(ReportParams {
@@ -126,12 +127,21 @@ fn get_report_params() -> Option<ReportParams> {
     })
 }
 
-fn get_report_data(params: &ReportParams) -> Option<Option<ReportData>> {
+fn get_report_data(params: &ReportParams, rides: &[CompletedRide]) -> Option<Option<ReportData>> {
     println!("Вводьте дані за обраний період");
 
-    let has_data = read_yes_no("Є дані для обраного звіту? (y/n): ")?;
-    if !has_data {
-        return Some(None);
+    // Замовлення, оформлені в поточному сеансі, можна взяти без ручного вводу
+    let from_session = !rides.is_empty()
+        && read_yes_no(&format!(
+            "Використати замовлення поточного сеансу ({} шт.)? (y/n): ",
+            rides.len()
+        ))?;
+
+    if !from_session {
+        let has_data = read_yes_no("Є дані для обраного звіту? (y/n): ")?;
+        if !has_data {
+            return Some(None);
+        }
     }
 
     let mut ride_count = 0;
@@ -141,18 +151,31 @@ fn get_report_data(params: &ReportParams) -> Option<Option<ReportData>> {
     let mut busy_hours = 0.0;
 
     if params.report_type.needs_rides() {
-        ride_count = read_number("Кількість виконаних замовлень: ", 0)?;
+        ride_count = if from_session {
+            rides.len()
+        } else {
+            read_number("Кількість виконаних замовлень: ", 0)?
+        };
     }
 
     if params.report_type.needs_revenue() {
-        revenue = read_number("Сумарна виручка (грн): ", 0.0)?;
+        revenue = if from_session {
+            rides.iter().map(|ride| ride.fare).sum::<i64>() as f64 / 100.0
+        } else {
+            read_number("Сумарна виручка (грн): ", 0.0)?
+        };
     }
 
     if params.report_type.needs_drivers() {
-        total_drivers = read_number("Кількість водіїв, які працювали за період: ", 0)?;
+        total_drivers = if from_session {
+            let drivers: HashSet<&str> = rides.iter().map(|ride| ride.driver_id.as_str()).collect();
+            drivers.len() as i64
+        } else {
+            read_number("Кількість водіїв, які працювали за період: ", 0)?
+        };
 
         if total_drivers > 0 {
-            total_hours = read_number("Сумарний час усії водіїв на лінії (год): ", 0.0)?;
+            total_hours = read_number("Сумарний час усіх водіїв на лінії (год): ", 0.0)?;
 
             busy_hours = loop {
                 let hours = read_number("Із них сумарний час виконання замовлень (год): ", 0.0)?;
@@ -226,9 +249,9 @@ fn print_report(params: &ReportParams, report: Option<(&Report, &ReportData)>) {
     }
 }
 
-pub fn run() {
+pub fn run(rides: &[CompletedRide]) {
     while let Some(params) = get_report_params() {
-        let Some(data) = get_report_data(&params) else {
+        let Some(data) = get_report_data(&params, rides) else {
             break;
         };
 

@@ -3,9 +3,14 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <stdexcept>
 #include <string>
 
 #include "src/fare_calculation.rs.h"
+
+// Межі вхідних даних. Якщо значення більше/менше - переповнення
+constexpr double MAX_DISTANCE_KM = 1000.0;
+constexpr double MAX_DURATION_MINUTES = 24 * 60.0;
 
 // Частка від суми у відсотках з округленням до копійки
 Money percentOf(Money amount, Money percent)
@@ -61,6 +66,17 @@ Money evaluatePromoDiscount(const std::string &code, Money currentTotal,
 
 FareCalculationResult processFareCalculation(const TripRequest &req)
 {
+    // Заперечення в умовах убирає ще NaN
+    if (!(req.distance_km > 0 && req.distance_km <= MAX_DISTANCE_KM)) {
+        throw std::invalid_argument(
+            "дистанція поїздки має бути в межах від 0 до 1000 км");
+    }
+    if (!(req.duration_minutes > 0 &&
+          req.duration_minutes <= MAX_DURATION_MINUTES)) {
+        throw std::invalid_argument(
+            "тривалість поїздки має бути в межах від 0 до 1440 хв");
+    }
+
     FareCalculationResult res{};
     res.plan = getTariffPlan(req.tariff);
 
