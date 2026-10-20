@@ -92,10 +92,10 @@ fn read_trip_order() -> Option<TripOrder> {
     let passenger_phone = read_line("Введіть телефон пасажира (+380...): ")?;
 
     println!("\nОберіть тарифний план поїздки:");
-    println!("  1 — Економ   (подача 55 грн, 9.50 грн/км, 1.80 грн/хв)");
-    println!("  2 — Стандарт (подача 70 грн, 11.50 грн/км, 2.00 грн/хв)");
-    println!("  3 — Комфорт  (подача 85 грн, 14.00 грн/км, 2.50 грн/хв)");
-    println!("  4 — Бізнес   (подача 140 грн, 22.00 грн/км, 4.50 грн/хв)");
+    println!("  1 — Економ   (подача 55 грн, 9.50 грн/км, 1.80 грн/хв, мін. 80 грн)");
+    println!("  2 — Стандарт (подача 70 грн, 11.50 грн/км, 2.00 грн/хв, мін. 95 грн)");
+    println!("  3 — Комфорт  (подача 85 грн, 14.00 грн/км, 2.50 грн/хв, мін. 120 грн)");
+    println!("  4 — Бізнес   (подача 140 грн, 22.00 грн/км, 4.50 грн/хв, мін. 200 грн)");
     let tariff = match read_line("Ваш вибір (1-4): ")?.parse::<u32>() {
         Ok(1) => ffi::Tariff::Econom,
         Ok(3) => ffi::Tariff::Comfort,
@@ -189,15 +189,21 @@ fn print_receipt(order: &TripOrder, res: &ffi::FareCalculationResult) {
         format_money(res.plan.base_cost_car)
     );
     println!(
-        "   - Дистанція ({:.2} км x {} грн):          {:>9} грн",
-        req.distance_km,
-        format_money(res.plan.cost_per_km),
+        "   {:<39}{:>9} грн",
+        format!(
+            "- Дистанція ({:.2} км x {} грн):",
+            req.distance_km,
+            format_money(res.plan.cost_per_km)
+        ),
         format_money(res.base_distance_cost)
     );
     println!(
-        "   - Час у дорозі ({:.2} хв x {} грн):       {:>9} грн",
-        req.duration_minutes,
-        format_money(res.plan.cost_per_min),
+        "   {:<39}{:>9} грн",
+        format!(
+            "- Час у дорозі ({:.2} хв x {} грн):",
+            req.duration_minutes,
+            format_money(res.plan.cost_per_min)
+        ),
         format_money(res.base_time_cost)
     );
     println!(
@@ -207,8 +213,8 @@ fn print_receipt(order: &TripOrder, res: &ffi::FareCalculationResult) {
 
     if req.surge_multiplier > 1.0 {
         println!(
-            "   Коефіцієнт підвищеного попиту (x{:.2}):   {:>9} грн",
-            req.surge_multiplier,
+            "   {:<39}{:>9} грн",
+            format!("Коефіцієнт попиту (x{:.2}):", req.surge_multiplier),
             format!("+{}", format_money(res.surge_added_amount))
         );
     }
@@ -220,6 +226,24 @@ fn print_receipt(order: &TripOrder, res: &ffi::FareCalculationResult) {
         );
     }
     println!("   Примітка промокоду: {}", res.promo_status_message);
+
+    // Доплата, якщо сума після знижки менша за мінімальну вартість тарифу
+    let cost_after_discount = res.fare_with_surge - res.promo_discount_amount;
+    let min_fare_surcharge = res.final_payable_amount - cost_after_discount;
+    if min_fare_surcharge > 0 {
+        println!(
+            "   Проміжний підсумок:                    {:>9} грн",
+            format_money(cost_after_discount)
+        );
+        println!(
+            "   {:<39}{:>9} грн",
+            format!(
+                "Доплата до мін. тарифу ({} грн):",
+                format_money(res.plan.min_total_fare)
+            ),
+            format!("+{}", format_money(min_fare_surcharge))
+        );
+    }
     println!("----------------------------------------------------------------");
     println!(
         " ДО ОПЛАТИ:                               {:>9} ГРН",
