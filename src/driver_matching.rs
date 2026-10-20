@@ -4,6 +4,7 @@ use std::fmt;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum CarClass {
     Economy,
+    Standart,
     Comfort,
     Business,
 }
@@ -12,6 +13,7 @@ impl fmt::Display for CarClass {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let name = match self {
             CarClass::Economy => "Економ",
+            CarClass::Standart => "Стандарт",
             CarClass::Comfort => "Комфорт",
             CarClass::Business => "Бізнес",
         };
@@ -31,13 +33,9 @@ impl Position {
     }
 }
 
-fn estimated_time(dist: f64, car_class: CarClass) -> f64 {
+fn estimated_time(dist: f64) -> f64 {
     const MINUTES_IN_HOUR: f64 = 60.0;
-    let mut avg_speed: f64 = 35.0;
-    if car_class == CarClass::Economy {
-        // В економі шофер шашкує
-        avg_speed = 70.0
-    };
+    let avg_speed: f64 = 35.0;
     (dist / avg_speed) * MINUTES_IN_HOUR
 }
 
@@ -110,10 +108,24 @@ fn candidate_drivers() -> Vec<Driver> {
             rating: 4.52,
             pos: Position { x: 4.5, y: 3.1 },
         },
+        Driver {
+            id: String::from("DRV-1006"),
+            name: String::from("Евгеній Руйда"),
+            car_model: String::from("Volkswagen Tiguan"),
+            car_plate: String::from("AA1214BC"),
+            car_class: CarClass::Standart,
+            is_available: true,
+            rating: 4.99,
+            pos: Position { x: 1.5, y: 7.1 },
+        },
     ]
 }
 
-fn match_driver<'a>(candidates: &'a [Driver], order: &Order, max_range: f64) -> Option<(&'a Driver, f64, f64)> {
+fn match_driver<'a>(
+    candidates: &'a [Driver],
+    order: &Order,
+    max_range: f64,
+) -> Option<(&'a Driver, f64, f64)> {
     let mut matching_candidates = Vec::new();
 
     for candidate in candidates {
@@ -127,20 +139,22 @@ fn match_driver<'a>(candidates: &'a [Driver], order: &Order, max_range: f64) -> 
             continue;
         }
 
-        // Географічне положеня
+        // Географічне положення
         let dist = order.pos.distance(&candidate.pos);
         if dist > max_range {
             continue;
         }
 
-        let eta = estimated_time(dist, candidate.car_class);
+        let eta = estimated_time(dist);
         matching_candidates.push((candidate, dist, eta));
     }
 
-    matching_candidates.into_iter().min_by(|a, b| a.1.total_cmp(&b.1))
+    matching_candidates
+        .into_iter()
+        .min_by(|a, b| a.1.total_cmp(&b.1))
 }
 
-// Читає число (координата може бути від'ємною); Не коректне введеня - None
+// Читає число (координата може бути від'ємною); Не коректне введення - None
 fn read_coordinate(prompt: &str) -> Option<f64> {
     let value = read_line(prompt)?
         .parse::<f64>()
@@ -168,12 +182,14 @@ fn read_order() -> Option<Order> {
 
     println!("\nОберіть клас авто:");
     println!("  1 — Економ");
-    println!("  2 — Комфорт");
-    println!("  3 — Бізнес");
+    println!("  2 — Стандарт");
+    println!("  3 — Комфорт");
+    println!("  4 — Бізнес");
     let desired_class = match read_line("Ваш вибір (1-3): ")?.parse::<u32>() {
         Ok(1) => CarClass::Economy,
-        Ok(2) => CarClass::Comfort,
-        Ok(3) => CarClass::Business,
+        Ok(2) => CarClass::Standart,
+        Ok(3) => CarClass::Comfort,
+        Ok(4) => CarClass::Business,
         _ => {
             println!("[ПОМИЛКА] Невідомий клас авто.");
             return None;
@@ -192,7 +208,10 @@ fn print_match_result(order: &Order, result: Option<(&Driver, f64, f64)>) {
     println!("               РЕЗУЛЬТАТ ПІДБОРУ ВОДІЯ                  ");
     println!("========================================================");
     println!(" Замовлення №:        {}", order.order_id);
-    println!(" Координати:          ({:.2}; {:.2})", order.pos.x, order.pos.y);
+    println!(
+        " Координати:          ({:.2}; {:.2})",
+        order.pos.x, order.pos.y
+    );
     println!(" Клас авто:           {}", order.desired_class);
     println!("--------------------------------------------------------");
 
@@ -200,7 +219,10 @@ fn print_match_result(order: &Order, result: Option<(&Driver, f64, f64)>) {
         Some((driver, dist, eta)) => {
             println!(" Водій:               {} ({})", driver.name, driver.id);
             println!(" Рейтинг:             {:.2}", driver.rating);
-            println!(" Авто:                {} | {}", driver.car_model, driver.car_plate);
+            println!(
+                " Авто:                {} | {}",
+                driver.car_model, driver.car_plate
+            );
             println!(" Відстань до пасажира: {:.2} км", dist);
             println!(" Час подачі:          ~{:.0} хв", eta);
             println!("\n [OK] Водія призначено на замовлення.");
@@ -215,8 +237,7 @@ fn print_match_result(order: &Order, result: Option<(&Driver, f64, f64)>) {
 }
 
 pub fn run() {
-    const SEARCH_RADIUS_KM: f64 = 5.0;
-    const EXTENDED_RADIUS_KM: f64 = 10.0;
+    const SEARCH_RADIUS_KM: f64 = 10.0;
 
     let Some(order) = read_order() else {
         eprintln!("\n[ПОМИЛКА] Некоректні вхідні дані замовлення.");
@@ -224,7 +245,6 @@ pub fn run() {
     };
 
     let drivers = candidate_drivers();
-    let result = match_driver(&drivers, &order, SEARCH_RADIUS_KM)
-        .or_else(|| match_driver(&drivers, &order, EXTENDED_RADIUS_KM));
+    let result = match_driver(&drivers, &order, SEARCH_RADIUS_KM);
     print_match_result(&order, result);
 }
