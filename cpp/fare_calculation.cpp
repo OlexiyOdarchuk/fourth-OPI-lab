@@ -22,7 +22,7 @@ Money percentOf(Money amount, Money percent)
 TariffPlan getTariffPlan(Tariff tariff)
 {
     switch (tariff) {
-        case Tariff::Econom:
+        case Tariff::Economy:
             return {"Економ", 5500, 950, 180, 8000};
         case Tariff::Comfort:
             return {"Комфорт", 8500, 1400, 250, 12'000};
