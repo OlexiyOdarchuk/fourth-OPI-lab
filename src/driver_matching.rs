@@ -4,7 +4,7 @@ use std::fmt;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum CarClass {
     Economy,
-    Standart,
+    Standard,
     Comfort,
     Business,
 }
