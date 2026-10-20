@@ -4,7 +4,7 @@ use crate::input::read_line;
 mod ffi {
     // Тарифний план поїздки
     enum Tariff {
-        Econom = 1,
+        Economy = 1,
         Standard = 2,
         Comfort = 3,
         Business = 4,
@@ -102,7 +102,7 @@ fn read_trip_order() -> Option<TripOrder> {
     if order_id.is_empty() {
         return None;
     }
-    let passenger_phone = read_line("Введіть телефон пасажира (+380...): ")?;
+    let passenger_phone = read_line("Введіть номер телефону (+380...): ")?;
 
     println!("\nОберіть тарифний план поїздки:");
     println!("  1 — Економ   (подача 55 грн, 9.50 грн/км, 1.80 грн/хв, мін. 80 грн)");
@@ -110,7 +110,7 @@ fn read_trip_order() -> Option<TripOrder> {
     println!("  3 — Комфорт  (подача 85 грн, 14.00 грн/км, 2.50 грн/хв, мін. 120 грн)");
     println!("  4 — Бізнес   (подача 140 грн, 22.00 грн/км, 4.50 грн/хв, мін. 200 грн)");
     let tariff = match read_line("Ваш вибір (1-4): ")?.parse::<u32>() {
-        Ok(1) => Tariff::Econom,
+        Ok(1) => Tariff::Economy,
         Ok(3) => Tariff::Comfort,
         Ok(4) => Tariff::Business,
         _ => Tariff::Standard,

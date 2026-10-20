@@ -12,7 +12,7 @@ pub(crate) struct CompletedRide {
 // Тариф відповідає класу авто, який обрав пасажир
 fn tariff_for(class: CarClass) -> Tariff {
     match class {
-        CarClass::Economy => Tariff::Econom,
+        CarClass::Economy => Tariff::Economy,
         CarClass::Standard => Tariff::Standard,
         CarClass::Comfort => Tariff::Comfort,
         CarClass::Business => Tariff::Business,
@@ -54,7 +54,7 @@ pub fn run(rides: &mut Vec<CompletedRide>) {
     println!("--- Крок 2 з 3: розрахунок вартості ---");
     let duration_minutes = driver_matching::estimated_time(distance_km);
     println!("Маршрут: {distance_km:.2} км, орієнтовний час у дорозі {duration_minutes:.0} хв");
-    let Some(passenger_phone) = read_line("Введіть телефон пасажира (+380...): ")
+    let Some(passenger_phone) = read_line("Введіть номер телефону (+380...): ")
     else {
         return;
     };
