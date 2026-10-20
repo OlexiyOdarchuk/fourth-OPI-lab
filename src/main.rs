@@ -1,3 +1,4 @@
+mod driver_matching;
 mod fare_calculation;
 mod input;
 mod report_writer;
@@ -13,6 +14,7 @@ fn main() {
         println!("1. Оцінювання поїздки");
         println!("2. Генерація звітів");
         println!("3. Обрахунок вартості поїздки");
+        println!("4. Підбір водія");
         println!("0. Вихід");
         println!("---------------------------------");
 
@@ -32,6 +34,10 @@ fn main() {
             Ok(3) => {
                 println!("\n--- [ МОДУЛЬ: ОБРАХУНОК ВАРТОСТІ ПОЇЗДКИ ] ---");
                 fare_calculation::run();
+            }
+            Ok(4) => {
+                println!("\n--- [ МОДУЛЬ: ПІДБІР ВОДІЯ ] ---");
+                driver_matching::run();
             }
             Ok(0) => break,
             Ok(_) => println!("\n[ПОМИЛКА] Невідома опція. Спробуйте ще раз."),
