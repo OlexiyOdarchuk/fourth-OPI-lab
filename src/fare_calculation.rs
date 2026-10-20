@@ -116,7 +116,7 @@ fn read_trip_order() -> Option<TripOrder> {
         read_line("Введіть коефіцієнт завантаженості / попиту (1.0 — норма, до 2.5): ")?
             .parse::<f64>()
             .ok()
-            .filter(|v| v.is_finite() && *v >= 1.0)
+            .filter(|v| v.is_finite() && *v >= 1.0 && *v <= 2.5)
             .unwrap_or(1.0);
 
     let mut promo_code =
