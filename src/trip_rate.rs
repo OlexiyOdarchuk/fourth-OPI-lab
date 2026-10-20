@@ -3,7 +3,7 @@ use std::fmt;
 use crate::input::read_line;
 
 // Категорії компліментів від пасажира
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum Compliment {
     CleanCar,      //< Чисте та охайне авто
     PoliteDriver,  //< Ввічливий та уважний водій
@@ -42,6 +42,7 @@ impl TryFrom<u32> for Compliment {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum DriverTier {
+    Newcomer, // Новий водій (замало оцінок для визначення рівня)
     Platinum, // Платиновий водій (найвищий рейтинг)
     Gold,     // Золотий водій
     Standard, // Стандартний водій
@@ -56,8 +57,14 @@ struct TierMeta {
     is_warning_issued: bool,     // Прапорець критичного зниження рейтингу нижче порогу
 }
 
+// Мінімальна кількість оцінок, після якої водію присвоюється рівень
+const MIN_TRIPS_FOR_TIER: u32 = 10;
+
 impl DriverTier {
-    fn from_rating(rating: f64) -> Self {
+    fn from_rating(rating: f64, trip_count: u32) -> Self {
+        if trip_count < MIN_TRIPS_FOR_TIER {
+            return Self::Newcomer;
+        }
         match rating {
             r if r >= 4.90 => Self::Platinum,
             r if r >= 4.75 => Self::Gold,
@@ -68,6 +75,12 @@ impl DriverTier {
 
     fn meta(self) -> TierMeta {
         match self {
+            Self::Newcomer => TierMeta {
+                name: "Новий водій (Newcomer)",
+                badge_title: "Рівень визначається після 10 оцінок",
+                dispatch_bonus_percent: 0.0,
+                is_warning_issued: false,
+            },
             Self::Platinum => TierMeta {
                 name: "Платиновий водій (Platinum Tier)",
                 badge_title: "Вищий пілотаж сервісу",
@@ -133,10 +146,10 @@ impl RatingInput {
         };
 
         let trips_str = read_line("Введіть кількість оцінених поїздок водія до цього часу: ")?;
-        let total_previous_trips: u32 = trips_str.parse().ok().or_else(|| {
-            println!("[ПОМИЛКА] Кількість поїздок не може бути від'ємною.");
-            None
-        })?;
+        let Ok(total_previous_trips) = trips_str.parse::<u32>() else {
+            println!("[ПОМИЛКА] Кількість поїздок має бути цілим невід'ємним числом.");
+            return None;
+        };
 
         Self::read_trip_feedback(driver_id, driver_name, current_rating, total_previous_trips)
     }
@@ -173,6 +186,10 @@ impl RatingInput {
             .filter_map(|s| s.parse::<u32>().ok())
             .filter_map(|val| Compliment::try_from(val).ok()) // Використовуємо TryFrom
             .collect();
+
+        // Кожен комплімент враховується один раз, у порядку пунктів меню
+        compliments.sort();
+        compliments.dedup();
 
         if compliments.is_empty() {
             compliments.push(Compliment::Standard);
@@ -221,7 +238,7 @@ impl RatingResult {
             new_rating,
             rating_delta: new_rating - old_rating,
             updated_trip_count: input.total_previous_trips + 1,
-            tier: DriverTier::from_rating(new_rating),
+            tier: DriverTier::from_rating(new_rating, input.total_previous_trips + 1),
         }
     }
 
