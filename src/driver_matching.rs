@@ -13,7 +13,7 @@ impl fmt::Display for CarClass {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let name = match self {
             CarClass::Economy => "Економ",
-            CarClass::Standart => "Стандарт",
+            CarClass::Standard => "Стандарт",
             CarClass::Comfort => "Комфорт",
             CarClass::Business => "Бізнес",
         };
