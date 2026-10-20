@@ -113,7 +113,7 @@ fn candidate_drivers() -> Vec<Driver> {
             name: String::from("Евгеній Руйда"),
             car_model: String::from("Volkswagen Tiguan"),
             car_plate: String::from("AA1214BC"),
-            car_class: CarClass::Standart,
+            car_class: CarClass::Standard,
             is_available: true,
             rating: 4.99,
             pos: Position { x: 1.5, y: 7.1 },
