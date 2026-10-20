@@ -91,7 +91,7 @@ pub(crate) fn settle(order: &TripOrder) -> Option<i64> {
             Some(result.final_payable_amount)
         }
         Err(err) => {
-            eprintln!("\n[ЗБІЙ] Внутрішня помилка модуля розрахунку: {err}");
+            eprintln!("\n[ПОМИЛКА] Розрахунок вартості неможливий: {err}.");
             None
         }
     }
@@ -145,8 +145,10 @@ pub(crate) fn read_trip_request(
             .filter(|v| v.is_finite() && *v >= 1.0 && *v <= 2.5)
             .unwrap_or(1.0);
 
+    // Регістр зводиться тут: toupper у C++ не змінює кирилицю
     let mut promo_code =
-        read_line("Введіть промокод на знижку (наприклад, KNU2026, або '-' якщо немає): ")?;
+        read_line("Введіть промокод на знижку (наприклад, KNU2026, або '-' якщо немає): ")?
+            .to_uppercase();
     if promo_code.is_empty() {
         promo_code = "-".to_string();
     }
