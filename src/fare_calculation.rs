@@ -102,7 +102,7 @@ fn read_trip_order() -> Option<TripOrder> {
     if order_id.is_empty() {
         return None;
     }
-    let passenger_phone = read_line("Введіть номер телефону (+380...): ")?;
+    let passenger_phone = read_line("Введіть номер телефону пасажира (+380...): ")?;
 
     println!("\nОберіть тарифний план поїздки:");
     println!("  1 — Економ   (подача 55 грн, 9.50 грн/км, 1.80 грн/хв, мін. 80 грн)");

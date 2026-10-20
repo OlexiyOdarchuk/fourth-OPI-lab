@@ -54,7 +54,7 @@ pub fn run(rides: &mut Vec<CompletedRide>) {
     println!("--- Крок 2 з 3: розрахунок вартості ---");
     let duration_minutes = driver_matching::estimated_time(distance_km);
     println!("Маршрут: {distance_km:.2} км, орієнтовний час у дорозі {duration_minutes:.0} хв");
-    let Some(passenger_phone) = read_line("Введіть номер телефону (+380...): ")
+    let Some(passenger_phone) = read_line("Введіть номер телефону пасажира (+380...): ")
     else {
         return;
     };
