@@ -187,7 +187,7 @@ fn read_order() -> Option<Order> {
     println!("  4 — Бізнес");
     let desired_class = match read_line("Ваш вибір (1-4): ")?.parse::<u32>() {
         Ok(1) => CarClass::Economy,
-        Ok(2) => CarClass::Standart,
+        Ok(2) => CarClass::Standard,
         Ok(3) => CarClass::Comfort,
         Ok(4) => CarClass::Business,
         _ => {
