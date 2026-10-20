@@ -116,9 +116,6 @@ struct RatingInput {
 
 impl RatingInput {
     fn read_from_stdin() -> Option<Self> {
-        println!("==================================================");
-        println!("  АС «ВИКЛИК ТАКСІ» - МОДУЛЬ ОЦІНЮВАННЯ ПОЇЗДКИ   ");
-        println!("==================================================\n");
         let driver_id = read_line("Введіть ідентифікатор водія (наприклад, DRV-1042): ")?;
         if driver_id.is_empty() {
             return None;
@@ -141,6 +138,16 @@ impl RatingInput {
             None
         })?;
 
+        Self::read_trip_feedback(driver_id, driver_name, current_rating, total_previous_trips)
+    }
+
+    // Читає оцінку, компліменти та відгук для водія з відомою історією
+    fn read_trip_feedback(
+        driver_id: String,
+        driver_name: String,
+        current_rating: f64,
+        total_previous_trips: u32,
+    ) -> Option<Self> {
         println!("\n--- Оцінювання щойно завершеної поїздки ---");
         let stars_str = read_line("Поставте оцінку поїздці (від 1 до 5 зірок): ")?;
         let trip_stars: u32 = stars_str.parse().ok()?;
@@ -280,7 +287,32 @@ impl RatingResult {
 }
 
 pub fn run() {
+    println!("==================================================");
+    println!("  АС «ВИКЛИК ТАКСІ» - МОДУЛЬ ОЦІНЮВАННЯ ПОЇЗДКИ   ");
+    println!("==================================================\n");
+
     let Some(input) = RatingInput::read_from_stdin() else {
+        eprintln!("\n[ПОМИЛКА] Некоректні вхідні дані.");
+        return;
+    };
+
+    let result = RatingResult::process(&input);
+    result.print_summary(&input);
+}
+
+// Оцінювання поїздки з водієм, якого призначила система
+pub(crate) fn rate_driver(
+    driver_id: &str,
+    driver_name: &str,
+    current_rating: f64,
+    total_previous_trips: u32,
+) {
+    let Some(input) = RatingInput::read_trip_feedback(
+        driver_id.to_string(),
+        driver_name.to_string(),
+        current_rating,
+        total_previous_trips,
+    ) else {
         eprintln!("\n[ПОМИЛКА] Некоректні вхідні дані.");
         return;
     };

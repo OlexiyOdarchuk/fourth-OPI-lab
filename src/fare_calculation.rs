@@ -61,30 +61,43 @@ mod ffi {
     }
 }
 
+pub(crate) use ffi::Tariff;
+
 // Дані замовлення разом із параметрами для розрахунку
-struct TripOrder {
-    order_id: String,
-    passenger_phone: String,
-    request: ffi::TripRequest,
+pub(crate) struct TripOrder {
+    pub(crate) order_id: String,
+    pub(crate) passenger_phone: String,
+    pub(crate) request: ffi::TripRequest,
 }
 
 pub fn run() {
+    println!("========================================================");
+    println!(" АС «ВИКЛИК ТАКСІ» — МОДУЛЬ ТАРИФІКАЦІЇ ТА ОПЛАТИ (UC6) ");
+    println!("========================================================\n");
+
     let Some(order) = read_trip_order() else {
         eprintln!("\n[ЗБІЙ] Помилка вводу параметрів розрахунку вартості.");
         return;
     };
 
+    settle(&order);
+}
+
+// Розраховує вартість і друкує чек; повертає суму до оплати в копійках
+pub(crate) fn settle(order: &TripOrder) -> Option<i64> {
     match ffi::process_fare_calculation(&order.request) {
-        Ok(result) => print_receipt(&order, &result),
-        Err(err) => eprintln!("\n[ЗБІЙ] Внутрішня помилка модуля розрахунку: {err}"),
+        Ok(result) => {
+            print_receipt(order, &result);
+            Some(result.final_payable_amount)
+        }
+        Err(err) => {
+            eprintln!("\n[ЗБІЙ] Внутрішня помилка модуля розрахунку: {err}");
+            None
+        }
     }
 }
 
 fn read_trip_order() -> Option<TripOrder> {
-    println!("========================================================");
-    println!(" АС «ВИКЛИК ТАКСІ» — МОДУЛЬ ТАРИФІКАЦІЇ ТА ОПЛАТИ (UC6) ");
-    println!("========================================================\n");
-
     let order_id = read_line("Введіть номер замовлення (наприклад, ORD-7789): ")?;
     if order_id.is_empty() {
         return None;
@@ -97,10 +110,10 @@ fn read_trip_order() -> Option<TripOrder> {
     println!("  3 — Комфорт  (подача 85 грн, 14.00 грн/км, 2.50 грн/хв, мін. 120 грн)");
     println!("  4 — Бізнес   (подача 140 грн, 22.00 грн/км, 4.50 грн/хв, мін. 200 грн)");
     let tariff = match read_line("Ваш вибір (1-4): ")?.parse::<u32>() {
-        Ok(1) => ffi::Tariff::Econom,
-        Ok(3) => ffi::Tariff::Comfort,
-        Ok(4) => ffi::Tariff::Business,
-        _ => ffi::Tariff::Standard,
+        Ok(1) => Tariff::Econom,
+        Ok(3) => Tariff::Comfort,
+        Ok(4) => Tariff::Business,
+        _ => Tariff::Standard,
     };
 
     let distance_km = read_positive(
@@ -112,6 +125,19 @@ fn read_trip_order() -> Option<TripOrder> {
         "[ПОМИЛКА] Тривалість поїздки має бути додатною.",
     )?;
 
+    Some(TripOrder {
+        order_id,
+        passenger_phone,
+        request: read_trip_request(tariff, distance_km, duration_minutes)?,
+    })
+}
+
+// Читає коефіцієнт попиту, промокод і спосіб оплати для вже відомого маршруту
+pub(crate) fn read_trip_request(
+    tariff: Tariff,
+    distance_km: f64,
+    duration_minutes: f64,
+) -> Option<ffi::TripRequest> {
     let surge_multiplier =
         read_line("Введіть коефіцієнт завантаженості / попиту (1.0 — норма, до 2.5): ")?
             .parse::<f64>()
@@ -135,17 +161,13 @@ fn read_trip_order() -> Option<TripOrder> {
         _ => ffi::PaymentMethod::Card,
     };
 
-    Some(TripOrder {
-        order_id,
-        passenger_phone,
-        request: ffi::TripRequest {
-            tariff,
-            distance_km,
-            duration_minutes,
-            surge_multiplier,
-            promo_code,
-            payment_method,
-        },
+    Some(ffi::TripRequest {
+        tariff,
+        distance_km,
+        duration_minutes,
+        surge_multiplier,
+        promo_code,
+        payment_method,
     })
 }
 
