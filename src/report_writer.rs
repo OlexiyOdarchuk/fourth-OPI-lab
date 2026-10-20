@@ -14,7 +14,7 @@ enum ReportType {
 
 impl ReportType {
     fn needs_rides(&self) -> bool {
-        matches!(self, ReportType::All | ReportType::Drivers)
+        matches!(self, ReportType::All | ReportType::Rides)
     }
     fn needs_revenue(&self) -> bool {
         matches!(self, ReportType::All | ReportType::Revenue)
