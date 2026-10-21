@@ -46,8 +46,10 @@ mod ffi {
         fare_with_surge: i64,
         promo_discount_amount: i64,
         final_payable_amount: i64,
-        vat_tax_amount: i64,      // ПДВ 20%
-        service_fee_share: i64,   // Частка комісії сервісу 15%
+        vat_percent: i64,         // Ставка ПДВ, %
+        vat_tax_amount: i64,      // ПДВ у складі суми до оплати
+        service_fee_percent: i64, // Ставка комісії сервісу, %
+        service_fee_share: i64,   // Частка комісії сервісу
         driver_net_earnings: i64, // Чистий заробіток перевізника
         payment_method_name: String,
         promo_status_message: String,
@@ -275,7 +277,8 @@ fn print_receipt(order: &TripOrder, res: &ffi::FareCalculationResult) {
     );
     // ПДВ уже входить у суму до оплати, тому виводиться окремо від розподілу платежу
     println!(
-        "   у т. ч. ПДВ (20%):                     {:>9} грн",
+        "   {:<39}{:>9} грн",
+        format!("у т. ч. ПДВ ({}%):", res.vat_percent),
         format_money(res.vat_tax_amount)
     );
     println!(" Спосіб оплати:       {}", res.payment_method_name);
@@ -283,7 +286,8 @@ fn print_receipt(order: &TripOrder, res: &ffi::FareCalculationResult) {
     println!("----------------------------------------------------------------");
     println!(" РОЗПОДІЛ ОПЛАТИ:");
     println!(
-        "   - Комісія сервісу:               {:>9} грн",
+        "   {:<39}{:>9} грн",
+        format!("- Комісія сервісу ({}%):", res.service_fee_percent),
         format_money(res.service_fee_share)
     );
     println!(
