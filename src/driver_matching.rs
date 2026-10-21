@@ -164,16 +164,32 @@ pub(crate) fn match_driver<'a>(
         .min_by(|a, b| a.1.total_cmp(&b.1))
 }
 
-// Читає число (координата може бути від'ємною); Не коректне введення - None
+// Читає число (координата може бути від'ємною); при некоректному введенні просить повторити; None - EOF
 pub(crate) fn read_coordinate(prompt: &str) -> Option<f64> {
-    let value = read_line(prompt)?
-        .parse::<f64>()
-        .ok()
-        .filter(|v| v.is_finite());
-    if value.is_none() {
-        eprintln!("[ПОМИЛКА] Координата має бути числом.");
+    loop {
+        match read_line(prompt)?.parse::<f64>() {
+            Ok(v) if v.is_finite() => return Some(if v == 0.0 { 0.0 } else { v }),
+            _ => eprintln!("[ПОМИЛКА] Координата має бути числом. Спробуйте ще раз."),
+        }
     }
-    value
+}
+
+// Читає клас авто (1-4); при некоректному введенні просить повторити; None - EOF
+fn read_car_class() -> Option<CarClass> {
+    println!("\nОберіть клас авто:");
+    println!("  1 — Економ");
+    println!("  2 — Стандарт");
+    println!("  3 — Комфорт");
+    println!("  4 — Бізнес");
+    loop {
+        match read_line("Ваш вибір (1-4): ")?.parse::<u32>() {
+            Ok(1) => return Some(CarClass::Economy),
+            Ok(2) => return Some(CarClass::Standard),
+            Ok(3) => return Some(CarClass::Comfort),
+            Ok(4) => return Some(CarClass::Business),
+            _ => eprintln!("[ПОМИЛКА] Невідомий клас авто. Спробуйте ще раз."),
+        }
+    }
 }
 
 pub(crate) fn read_order() -> Option<Order> {
@@ -186,21 +202,7 @@ pub(crate) fn read_order() -> Option<Order> {
     let x = read_coordinate("  X: ")?;
     let y = read_coordinate("  Y: ")?;
 
-    println!("\nОберіть клас авто:");
-    println!("  1 — Економ");
-    println!("  2 — Стандарт");
-    println!("  3 — Комфорт");
-    println!("  4 — Бізнес");
-    let desired_class = match read_line("Ваш вибір (1-4): ")?.parse::<u32>() {
-        Ok(1) => CarClass::Economy,
-        Ok(2) => CarClass::Standard,
-        Ok(3) => CarClass::Comfort,
-        Ok(4) => CarClass::Business,
-        _ => {
-            eprintln!("[ПОМИЛКА] Невідомий клас авто.");
-            return None;
-        }
-    };
+    let desired_class = read_car_class()?;
 
     Some(Order {
         order_id,
