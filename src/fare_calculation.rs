@@ -273,16 +273,17 @@ fn print_receipt(order: &TripOrder, res: &ffi::FareCalculationResult) {
         " ДО ОПЛАТИ:                               {:>9} ГРН",
         format_money(res.final_payable_amount)
     );
+    // ПДВ уже входить у суму до оплати, тому виводиться окремо від розподілу платежу
+    println!(
+        "   у т. ч. ПДВ (20%):                     {:>9} грн",
+        format_money(res.vat_tax_amount)
+    );
     println!(" Спосіб оплати:       {}", res.payment_method_name);
     println!(" Статус транзакції:   УСПІШНО АВТОРИЗОВАНО (AUTH_OK)");
     println!("----------------------------------------------------------------");
-    println!(" В ТОМУ ЧИСЛІ:");
+    println!(" РОЗПОДІЛ ОПЛАТИ:");
     println!(
-        "   - ПДВ (20%):                           {:>9} грн",
-        format_money(res.vat_tax_amount)
-    );
-    println!(
-        "   - Комісія сервісу (15%):               {:>9} грн",
+        "   - Комісія сервісу:               {:>9} грн",
         format_money(res.service_fee_share)
     );
     println!(

@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cstdint>
+#include <iomanip>
 #include <stdexcept>
 #include <string>
 
@@ -11,6 +13,9 @@
 // Межі вхідних даних. Якщо значення більше/менше - переповнення
 constexpr double MAX_DISTANCE_KM = 1000.0;
 constexpr double MAX_DURATION_MINUTES = 24 * 60.0;
+
+// Комісія платформи
+constexpr uint8_t PLATFORM_COMMISSION = 20;
 
 // Частка від суми у відсотках з округленням до копійки
 Money percentOf(Money amount, Money percent)
@@ -51,8 +56,15 @@ Money evaluatePromoDiscount(const std::string &code, Money currentTotal,
         Money discount = 4000; // Фіксована знижка 40 грн
         if (discount > currentTotal / 2) {
             discount = currentTotal / 2;
+            std::ostringstream oss;
+            oss << "Промокод [" << c << "] застосовано: знижка "
+                << (discount / 100) << '.' << std::setfill('0') << std::setw(2)
+                << std::abs(discount % 100) << " грн";
+
+            msg = oss.str();
+        } else {
+            msg = "Промокод [" + c + "] застосовано: фіксована знижка 40 грн";
         }
-        msg = "Промокод [" + c + "] застосовано: фіксована знижка 40 грн";
         return discount;
     } else if (c == "-" || c == "NONE" || c == "НІ") {
         msg = "Промокод не використовувався";
@@ -106,8 +118,8 @@ FareCalculationResult processFareCalculation(const TripRequest &req)
     // Фіскальні та партнерські розщеплення платежу
     res.vat_tax_amount =
         (res.final_payable_amount * 20 + 60) / 120; // ПДВ у складі ціни
-    res.service_fee_share =
-        percentOf(res.final_payable_amount, 15); // 15% комісія платформи
+    res.service_fee_share = percentOf(res.final_payable_amount,
+                                      PLATFORM_COMMISSION); // комісія платформи
     res.driver_net_earnings = res.final_payable_amount - res.service_fee_share;
 
     switch (req.payment_method) {
