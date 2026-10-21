@@ -68,10 +68,11 @@ where
         let line = read_line(prompt)?;
         if let Ok(val) = line.parse::<T>()
             && val >= min
+            && !line.to_lowercase().contains("inf")
         {
             return Some(val);
         }
-        println!("Помилка: введіть число не менше {min}");
+        println!("Помилка: введіть число не менше {min}, й менше за нескінченність.");
     }
 }
 
@@ -241,7 +242,7 @@ fn print_report(params: &ReportParams, report: Option<(&Report, &ReportData)>) {
 
         if data.total_hours > 0.0 {
             if let Some(workload) = report.drivers_workload {
-                println!("Завантаженість водіїв: {:.1}", workload);
+                println!("Завантаженість водіїв: {:.1}%", workload);
             }
         } else {
             println!("Завантаженість не визначено: час на лінії дорівнює 0");
