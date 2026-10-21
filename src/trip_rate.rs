@@ -158,9 +158,9 @@ impl RatingInput {
 
         let trips_str =
             read_rating_line("Введіть кількість оцінених поїздок водія до цього часу: ")?;
-        let total_previous_trips = trips_str.parse::<u32>().map_err(
-            |_| "Кількість поїздок має бути цілим невід'ємним числом від 0 до 4294967294.",
-        )?;
+        let total_previous_trips = trips_str
+            .parse::<u32>()
+            .map_err(|_| "Кількість поїздок має бути цілим невід'ємним числом.")?;
 
         Self::read_trip_feedback(driver_id, driver_name, current_rating, total_previous_trips)
     }
@@ -193,16 +193,28 @@ impl RatingInput {
 
         let comp_line = read_rating_line("Ваш вибір (1-5, можна залишити порожнім): ")?;
 
-        let mut compliments: Vec<Compliment> = comp_line
+        // Невідомі категорії пропускаються з попередженням, щоб не втратити вже введену оцінку
+        let mut compliments = Vec::new();
+        let mut skipped = Vec::new();
+        for token in comp_line
             .split(|ch: char| ch.is_whitespace() || ch == ',')
             .filter(|s| !s.is_empty())
-            .map(|s| {
-                s.parse::<u32>()
-                    .ok()
-                    .and_then(|val| Compliment::try_from(val).ok())
-                    .ok_or("Категорії відгуку мають бути цілими числами від 1 до 5 через пробіл або кому; можна залишити поле порожнім.")
-            })
-            .collect::<Result<_, _>>()?;
+        {
+            match token
+                .parse::<u32>()
+                .ok()
+                .and_then(|val| Compliment::try_from(val).ok())
+            {
+                Some(compliment) => compliments.push(compliment),
+                None => skipped.push(token),
+            }
+        }
+        if !skipped.is_empty() {
+            println!(
+                "[УВАГА] Пропущено невідомі категорії: {}.",
+                skipped.join(", ")
+            );
+        }
 
         // Кожен комплімент враховується один раз, у порядку пунктів меню
         compliments.sort();
@@ -260,16 +272,8 @@ impl RatingResult {
         })
     }
 
-    fn print_summary(input: Result<RatingInput, &'static str>) {
-        let (input, result) =
-            match input.and_then(|input| Self::process(&input).map(|result| (input, result))) {
-                Ok(value) => value,
-                Err(message) => {
-                    eprintln!("\n[ПОМИЛКА] {message}");
-                    return;
-                }
-            };
-        let meta = result.tier.meta();
+    fn print_summary(&self, input: &RatingInput) {
+        let meta = self.tier.meta();
 
         println!("\n========================================================");
         println!("          ПІДСУМКОВА КАРТКА ОЦІНЮВАННЯ ПОЇЗДКИ           ");
@@ -278,7 +282,7 @@ impl RatingResult {
         println!(" Водій:                {}", input.driver_name);
         println!(
             " Попередня історія:   {} поїздок (рейтинг {:.2})",
-            input.total_previous_trips, result.old_rating
+            input.total_previous_trips, self.old_rating
         );
 
         let stars = "*".repeat(input.trip_stars as usize);
@@ -298,14 +302,14 @@ impl RatingResult {
         }
         println!("--------------------------------------------------------");
 
-        let delta_sign = if result.rating_delta >= 0.0 { "+" } else { "" };
+        let delta_sign = if self.rating_delta >= 0.0 { "+" } else { "" };
         println!(
             " Оновлений рейтинг:   {:.3} (зміна: {delta_sign}{:.3})",
-            result.new_rating, result.rating_delta
+            self.new_rating, self.rating_delta
         );
-        println!(" Всього оцінок:        {}", result.updated_trip_count);
+        println!(" Всього оцінок:        {}", self.updated_trip_count);
 
-        println!(" Кваліфікаційний рівень: {}", result.tier);
+        println!(" Кваліфікаційний рівень: {}", self.tier);
         println!(" Статусний бейдж:      [{}]", meta.badge_title);
 
         let bonus_sign = if meta.dispatch_bonus_percent >= 0.0 {
@@ -329,12 +333,20 @@ impl RatingResult {
     }
 }
 
+// Перераховує рейтинг і друкує картку або повідомлення про помилку введення
+fn rate(input: Result<RatingInput, &'static str>) {
+    match input.and_then(|input| RatingResult::process(&input).map(|result| (input, result))) {
+        Ok((input, result)) => result.print_summary(&input),
+        Err(message) => eprintln!("\n[ПОМИЛКА] {message}"),
+    }
+}
+
 pub fn run() {
     println!("==================================================");
     println!("  АС «ВИКЛИК ТАКСІ» - МОДУЛЬ ОЦІНЮВАННЯ ПОЇЗДКИ   ");
     println!("==================================================\n");
 
-    RatingResult::print_summary(RatingInput::read_from_stdin());
+    rate(RatingInput::read_from_stdin());
 }
 
 // Оцінювання поїздки з водієм, якого призначила система
@@ -344,7 +356,7 @@ pub(crate) fn rate_driver(
     current_rating: f64,
     total_previous_trips: u32,
 ) {
-    RatingResult::print_summary(RatingInput::read_trip_feedback(
+    rate(RatingInput::read_trip_feedback(
         driver_id.to_string(),
         driver_name.to_string(),
         current_rating,
