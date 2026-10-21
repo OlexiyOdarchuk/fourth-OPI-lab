@@ -171,7 +171,7 @@ pub(crate) fn read_coordinate(prompt: &str) -> Option<f64> {
         .ok()
         .filter(|v| v.is_finite());
     if value.is_none() {
-        println!("[ПОМИЛКА] Координата має бути числом.");
+        eprintln!("[ПОМИЛКА] Координата має бути числом.");
     }
     value
 }
@@ -197,7 +197,7 @@ pub(crate) fn read_order() -> Option<Order> {
         Ok(3) => CarClass::Comfort,
         Ok(4) => CarClass::Business,
         _ => {
-            println!("[ПОМИЛКА] Невідомий клас авто.");
+            eprintln!("[ПОМИЛКА] Невідомий клас авто.");
             return None;
         }
     };

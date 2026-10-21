@@ -210,7 +210,7 @@ impl RatingInput {
             }
         }
         if !skipped.is_empty() {
-            println!(
+            eprintln!(
                 "[УВАГА] Пропущено невідомі категорії: {}.",
                 skipped.join(", ")
             );

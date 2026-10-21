@@ -182,7 +182,7 @@ fn read_positive(prompt: &str, error: &str) -> Option<f64> {
         .ok()
         .filter(|v| v.is_finite() && *v > 0.0);
     if value.is_none() {
-        println!("{error}");
+        eprintln!("{error}");
     }
     value
 }
