@@ -71,7 +71,7 @@ where
         {
             return Some(val);
         }
-        eprintln!("Помилка: введіть число не менше {min}");
+        eprintln!("[ПОМИЛКА] Введіть число не менше {min}.");
     }
 }
 
@@ -81,7 +81,7 @@ fn read_date(prompt: &str) -> Option<NaiveDate> {
         if let Ok(date) = NaiveDate::parse_from_str(&input, "%d-%m-%Y") {
             return Some(date);
         }
-        eprintln!("Помилка: введіть існуючу дату у форматі ДД-ММ-РРРР");
+        eprintln!("[ПОМИЛКА] Введіть існуючу дату у форматі ДД-ММ-РРРР.");
     }
 }
 
@@ -91,7 +91,7 @@ fn read_yes_no(prompt: &str) -> Option<bool> {
         match input.to_lowercase().as_str() {
             "y" => return Some(true),
             "n" => return Some(false),
-            _ => eprintln!("Введіть y або n"),
+            _ => eprintln!("[ПОМИЛКА] Введіть y або n."),
         }
     }
 }
@@ -106,7 +106,7 @@ fn get_report_params() -> Option<ReportParams> {
         if (1..=4).contains(&num) {
             break num;
         }
-        eprintln!("Оберіть пункт від 1 до 4");
+        eprintln!("[ПОМИЛКА] Оберіть пункт від 1 до 4.");
     };
 
     let report_type = ReportType::try_from(choice).ok()?;
@@ -117,7 +117,7 @@ fn get_report_params() -> Option<ReportParams> {
         if end >= start_date {
             break end;
         }
-        eprintln!("Дата завершення не може бути раніше дати початку");
+        eprintln!("[ПОМИЛКА] Дата завершення не може бути раніше дати початку.");
     };
 
     Some(ReportParams {
@@ -182,7 +182,7 @@ fn get_report_data(params: &ReportParams, rides: &[CompletedRide]) -> Option<Opt
                 if hours <= total_hours {
                     break hours;
                 }
-                eprintln!("Час замовлень не може перевищувати час на лінії");
+                eprintln!("[ПОМИЛКА] Час замовлень не може перевищувати час на лінії.");
             };
         }
     }
