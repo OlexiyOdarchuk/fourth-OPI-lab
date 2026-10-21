@@ -68,7 +68,7 @@ where
         let line = read_line(prompt)?;
         if let Ok(val) = line.parse::<T>()
             && val >= min
-            && !line.to_lowercase().contains("inf")
+            && line.parse::<f64>().is_ok_and(f64::is_finite)
         {
             return Some(val);
         }
