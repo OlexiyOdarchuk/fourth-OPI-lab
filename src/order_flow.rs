@@ -39,7 +39,7 @@ pub fn run(rides: &mut Vec<CompletedRide>) {
     };
     let distance_km = order.pos.distance(&driver_matching::Position { x, y });
     if distance_km <= 0.0 {
-        println!("[ПОМИЛКА] Пункт призначення збігається з місцем посадки.");
+        eprintln!("[ПОМИЛКА] Пункт призначення збігається з місцем посадки.");
         return;
     }
 

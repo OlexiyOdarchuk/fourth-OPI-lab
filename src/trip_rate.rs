@@ -60,6 +60,16 @@ struct TierMeta {
 // Мінімальна кількість оцінок, після якої водію присвоюється рівень
 const MIN_TRIPS_FOR_TIER: u32 = 10;
 
+const TRIP_COUNT_OVERFLOW: &str = "Кількість попередніх поїздок занадто висока.";
+
+fn next_trip_count(previous: u32) -> Result<u32, &'static str> {
+    previous.checked_add(1).ok_or(TRIP_COUNT_OVERFLOW)
+}
+
+fn read_rating_line(prompt: &str) -> Result<String, &'static str> {
+    read_line(prompt).ok_or("Ввід перервано або сталася помилка читання. Оцінку не збережено.")
+}
+
 impl DriverTier {
     fn from_rating(rating: f64, trip_count: u32) -> Self {
         if trip_count < MIN_TRIPS_FOR_TIER {
@@ -128,28 +138,29 @@ struct RatingInput {
 }
 
 impl RatingInput {
-    fn read_from_stdin() -> Option<Self> {
-        let driver_id = read_line("Введіть ідентифікатор водія (наприклад, DRV-1042): ")?;
+    fn read_from_stdin() -> Result<Self, &'static str> {
+        let driver_id = read_rating_line("Введіть ідентифікатор водія (наприклад, DRV-1042): ")?;
         if driver_id.is_empty() {
-            return None;
+            return Err("Ідентифікатор водія не може бути порожнім.");
         };
-        let mut driver_name = read_line("Введіть повне ім'я водія: ").unwrap_or_default();
+        let mut driver_name = read_rating_line("Введіть повне ім'я водія: ")?;
         if driver_name.is_empty() {
             driver_name = "Володимир Ковалюк".to_string();
         };
 
-        let rating_str = read_line("Введіть поточний рейтинг водія (від 1.00 до 5.00): ")?;
-        let current_rating: f64 = rating_str.parse().ok()?;
+        let rating_str = read_rating_line("Введіть поточний рейтинг водія (від 1.00 до 5.00): ")?;
+        let current_rating: f64 = rating_str
+            .parse()
+            .map_err(|_| "Рейтинг має бути числом від 1.00 до 5.00; для дробової частини використовуйте крапку, наприклад 4.8.")?;
         if !(1.00..=5.00).contains(&current_rating) {
-            println!("[ПОМИЛКА] Рейтинг має бути дійсним числом у межах [1.00; 5.00]");
-            return None;
+            return Err("Рейтинг має бути скінченним числом у межах [1.00; 5.00].");
         };
 
-        let trips_str = read_line("Введіть кількість оцінених поїздок водія до цього часу: ")?;
-        let Ok(total_previous_trips) = trips_str.parse::<u32>() else {
-            println!("[ПОМИЛКА] Кількість поїздок має бути цілим невід'ємним числом.");
-            return None;
-        };
+        let trips_str =
+            read_rating_line("Введіть кількість оцінених поїздок водія до цього часу: ")?;
+        let total_previous_trips = trips_str
+            .parse::<u32>()
+            .map_err(|_| "Кількість поїздок має бути цілим невід'ємним числом.")?;
 
         Self::read_trip_feedback(driver_id, driver_name, current_rating, total_previous_trips)
     }
@@ -160,13 +171,15 @@ impl RatingInput {
         driver_name: String,
         current_rating: f64,
         total_previous_trips: u32,
-    ) -> Option<Self> {
+    ) -> Result<Self, &'static str> {
+        next_trip_count(total_previous_trips)?;
         println!("\n--- Оцінювання щойно завершеної поїздки ---");
-        let stars_str = read_line("Поставте оцінку поїздці (від 1 до 5 зірок): ")?;
-        let trip_stars: u32 = stars_str.parse().ok()?;
+        let stars_str = read_rating_line("Поставте оцінку поїздці (від 1 до 5 зірок): ")?;
+        let trip_stars: u32 = stars_str
+            .parse()
+            .map_err(|_| "Оцінка поїздки має бути цілим числом від 1 до 5.")?;
         if !(1..=5).contains(&trip_stars) {
-            println!("[ПОМИЛКА] Оцінка має бути цілим числом від 1 до 5.");
-            return None;
+            return Err("Оцінка поїздки має бути цілим числом від 1 до 5.");
         };
 
         println!(
@@ -178,14 +191,30 @@ impl RatingInput {
         println!("  4 — Швидке прибуття та оптимальний маршрут");
         println!("  5 — Стандартна поїздка (без особливих приміток)");
 
-        let comp_line = read_line("Ваш вибір (1-5): ").unwrap_or_default();
+        let comp_line = read_rating_line("Ваш вибір (1-5, можна залишити порожнім): ")?;
 
-        let mut compliments: Vec<Compliment> = comp_line
-            .split([' ', ','])
+        // Невідомі категорії пропускаються з попередженням, щоб не втратити вже введену оцінку
+        let mut compliments = Vec::new();
+        let mut skipped = Vec::new();
+        for token in comp_line
+            .split(|ch: char| ch.is_whitespace() || ch == ',')
             .filter(|s| !s.is_empty())
-            .filter_map(|s| s.parse::<u32>().ok())
-            .filter_map(|val| Compliment::try_from(val).ok()) // Використовуємо TryFrom
-            .collect();
+        {
+            match token
+                .parse::<u32>()
+                .ok()
+                .and_then(|val| Compliment::try_from(val).ok())
+            {
+                Some(compliment) => compliments.push(compliment),
+                None => skipped.push(token),
+            }
+        }
+        if !skipped.is_empty() {
+            eprintln!(
+                "[УВАГА] Пропущено невідомі категорії: {}.",
+                skipped.join(", ")
+            );
+        }
 
         // Кожен комплімент враховується один раз, у порядку пунктів меню
         compliments.sort();
@@ -195,11 +224,11 @@ impl RatingInput {
             compliments.push(Compliment::Standard);
         }
 
-        let comment =
-            read_line("\nВведіть текстовий відгук або побажання (залиште порожнім, якщо немає): ")
-                .unwrap_or_default();
+        let comment = read_rating_line(
+            "\nВведіть текстовий відгук або побажання (залиште порожнім, якщо немає): ",
+        )?;
 
-        Some(Self {
+        Ok(Self {
             driver_id,
             driver_name,
             current_rating,
@@ -222,24 +251,25 @@ struct RatingResult {
 }
 
 impl RatingResult {
-    fn process(input: &RatingInput) -> Self {
+    fn process(input: &RatingInput) -> Result<Self, &'static str> {
+        let updated_trip_count = next_trip_count(input.total_previous_trips)?;
         let old_rating = input.current_rating;
         let new_rating = if input.total_previous_trips == 0 {
             input.trip_stars as f64
         } else {
             let total_score =
                 old_rating * (input.total_previous_trips as f64) + (input.trip_stars as f64);
-            let raw_avg = total_score / ((input.total_previous_trips + 1) as f64);
+            let raw_avg = total_score / (updated_trip_count as f64);
             (raw_avg * 1000.0).round() / 1000.0
         };
 
-        Self {
+        Ok(Self {
             old_rating,
             new_rating,
             rating_delta: new_rating - old_rating,
-            updated_trip_count: input.total_previous_trips + 1,
-            tier: DriverTier::from_rating(new_rating, input.total_previous_trips + 1),
-        }
+            updated_trip_count,
+            tier: DriverTier::from_rating(new_rating, updated_trip_count),
+        })
     }
 
     fn print_summary(&self, input: &RatingInput) {
@@ -303,18 +333,20 @@ impl RatingResult {
     }
 }
 
+// Перераховує рейтинг і друкує картку або повідомлення про помилку введення
+fn rate(input: Result<RatingInput, &'static str>) {
+    match input.and_then(|input| RatingResult::process(&input).map(|result| (input, result))) {
+        Ok((input, result)) => result.print_summary(&input),
+        Err(message) => eprintln!("\n[ПОМИЛКА] {message}"),
+    }
+}
+
 pub fn run() {
     println!("==================================================");
     println!("  АС «ВИКЛИК ТАКСІ» - МОДУЛЬ ОЦІНЮВАННЯ ПОЇЗДКИ   ");
     println!("==================================================\n");
 
-    let Some(input) = RatingInput::read_from_stdin() else {
-        eprintln!("\n[ПОМИЛКА] Некоректні вхідні дані.");
-        return;
-    };
-
-    let result = RatingResult::process(&input);
-    result.print_summary(&input);
+    rate(RatingInput::read_from_stdin());
 }
 
 // Оцінювання поїздки з водієм, якого призначила система
@@ -324,16 +356,10 @@ pub(crate) fn rate_driver(
     current_rating: f64,
     total_previous_trips: u32,
 ) {
-    let Some(input) = RatingInput::read_trip_feedback(
+    rate(RatingInput::read_trip_feedback(
         driver_id.to_string(),
         driver_name.to_string(),
         current_rating,
         total_previous_trips,
-    ) else {
-        eprintln!("\n[ПОМИЛКА] Некоректні вхідні дані.");
-        return;
-    };
-
-    let result = RatingResult::process(&input);
-    result.print_summary(&input);
+    ));
 }
