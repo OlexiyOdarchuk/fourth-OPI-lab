@@ -78,7 +78,7 @@ pub fn run() {
     println!("========================================================\n");
 
     let Some(order) = read_trip_order() else {
-        eprintln!("\n[ЗБІЙ] Помилка вводу параметрів розрахунку вартості.");
+        eprintln!("\n[ПОМИЛКА] Некоректні вхідні дані розрахунку вартості.");
         return;
     };
 
@@ -120,11 +120,11 @@ fn read_trip_order() -> Option<TripOrder> {
 
     let distance_km = read_positive(
         "Введіть розраховану дистанцію маршруту (км): ",
-        "[ПОМИЛКА] Дистанція поїздки має бути додатною.",
+        "Дистанція поїздки має бути додатною.",
     )?;
     let duration_minutes = read_positive(
         "Введіть розрахунковий час у дорозі (хв): ",
-        "[ПОМИЛКА] Тривалість поїздки має бути додатною.",
+        "Тривалість поїздки має бути додатною.",
     )?;
 
     Some(TripOrder {
@@ -182,7 +182,7 @@ fn read_positive(prompt: &str, error: &str) -> Option<f64> {
         .ok()
         .filter(|v| v.is_finite() && *v > 0.0);
     if value.is_none() {
-        eprintln!("{error}");
+        eprintln!("[ПОМИЛКА] {error}");
     }
     value
 }
