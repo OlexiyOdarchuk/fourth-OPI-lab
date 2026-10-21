@@ -51,8 +51,11 @@ Money evaluatePromoDiscount(const std::string &code, Money currentTotal,
         Money discount = 4000; // Фіксована знижка 40 грн
         if (discount > currentTotal / 2) {
             discount = currentTotal / 2;
+            msg = "Промокод [" + c + "] застосовано: знижка" +
+                  std::to_string(discount) + " грн";
+        } else {
+            msg = "Промокод [" + c + "] застосовано: фіксована знижка 40 грн";
         }
-        msg = "Промокод [" + c + "] застосовано: фіксована знижка 40 грн";
         return discount;
     } else if (c == "-" || c == "NONE" || c == "НІ") {
         msg = "Промокод не використовувався";
