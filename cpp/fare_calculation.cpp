@@ -15,7 +15,7 @@ constexpr double MAX_DISTANCE_KM = 1000.0;
 constexpr double MAX_DURATION_MINUTES = 24 * 60.0;
 
 // Комісія платформи
-constexpr uint8_t PLATFORM_COMISSION = 20;
+constexpr uint8_t PLATFORM_COMMISSION = 20;
 
 // Частка від суми у відсотках з округленням до копійки
 Money percentOf(Money amount, Money percent)
@@ -119,7 +119,7 @@ FareCalculationResult processFareCalculation(const TripRequest &req)
     res.vat_tax_amount =
         (res.final_payable_amount * 20 + 60) / 120; // ПДВ у складі ціни
     res.service_fee_share = percentOf(res.final_payable_amount,
-                                      PLATFORM_COMISSION); // комісія платформи
+                                      PLATFORM_COMMISSION); // комісія платформи
     res.driver_net_earnings = res.final_payable_amount - res.service_fee_share;
 
     switch (req.payment_method) {
