@@ -242,7 +242,7 @@ fn print_report(params: &ReportParams, report: Option<(&Report, &ReportData)>) {
 
         if data.total_hours > 0.0 {
             if let Some(workload) = report.drivers_workload {
-                println!("Завантаженість водіїв: {:.1}%", workload);
+                println!("Завантаженість водіїв: {:.1} %", workload);
             }
         } else {
             println!("Завантаженість не визначено: час на лінії дорівнює 0");
