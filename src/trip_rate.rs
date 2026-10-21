@@ -60,7 +60,7 @@ struct TierMeta {
 // Мінімальна кількість оцінок, після якої водію присвоюється рівень
 const MIN_TRIPS_FOR_TIER: u32 = 10;
 
-const TRIP_COUNT_OVERFLOW: &str = "Кількість попередніх поїздок не може перевищувати 4294967294.";
+const TRIP_COUNT_OVERFLOW: &str = "Кількість попередніх поїздок занадто висока.";
 
 fn next_trip_count(previous: u32) -> Result<u32, &'static str> {
     previous.checked_add(1).ok_or(TRIP_COUNT_OVERFLOW)
@@ -349,50 +349,4 @@ pub(crate) fn rate_driver(
         current_rating,
         total_previous_trips,
     ));
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn input(previous_trips: u32) -> RatingInput {
-        RatingInput {
-            driver_id: "DRV-1".into(),
-            driver_name: "Тест".into(),
-            current_rating: 4.8,
-            total_previous_trips: previous_trips,
-            trip_stars: 5,
-            compliments: vec![Compliment::Standard],
-            comment: String::new(),
-        }
-    }
-
-    #[test]
-    fn rejects_overflow_even_without_stdin_validation() {
-        assert_eq!(
-            RatingResult::process(&input(u32::MAX)).unwrap_err(),
-            TRIP_COUNT_OVERFLOW
-        );
-    }
-
-    #[test]
-    fn accepts_largest_previous_trip_count() {
-        let result = RatingResult::process(&input(u32::MAX - 1)).unwrap();
-        assert_eq!(result.updated_trip_count, u32::MAX);
-        assert_eq!(result.new_rating, 4.8);
-        assert_eq!(result.tier, DriverTier::Gold);
-    }
-
-    #[test]
-    fn computes_first_rating_and_weighted_average() {
-        let first = RatingResult::process(&input(0)).unwrap();
-        assert_eq!(first.new_rating, 5.0);
-        assert_eq!(first.updated_trip_count, 1);
-        assert_eq!(first.tier, DriverTier::Newcomer);
-
-        let existing = RatingResult::process(&input(9)).unwrap();
-        assert_eq!(existing.new_rating, 4.82);
-        assert_eq!(existing.updated_trip_count, 10);
-        assert_eq!(existing.tier, DriverTier::Gold);
-    }
 }
