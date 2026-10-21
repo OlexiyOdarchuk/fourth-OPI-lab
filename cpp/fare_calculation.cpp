@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdint>
 #include <iomanip>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -14,7 +15,8 @@
 constexpr double MAX_DISTANCE_KM = 1000.0;
 constexpr double MAX_DURATION_MINUTES = 24 * 60.0;
 
-// Комісія платформи
+// Ставка ПДВ і комісія платформи у відсотках
+constexpr uint8_t VAT_PERCENT = 20;
 constexpr uint8_t PLATFORM_COMMISSION = 20;
 
 // Частка від суми у відсотках з округленням до копійки
@@ -116,8 +118,12 @@ FareCalculationResult processFareCalculation(const TripRequest &req)
         std::max(costAfterDiscount, res.plan.min_total_fare);
 
     // Фіскальні та партнерські розщеплення платежу
+    // ПДВ у складі ціни з округленням до копійки
+    res.vat_percent = VAT_PERCENT;
     res.vat_tax_amount =
-        (res.final_payable_amount * 20 + 60) / 120; // ПДВ у складі ціни
+        (res.final_payable_amount * VAT_PERCENT + (100 + VAT_PERCENT) / 2) /
+        (100 + VAT_PERCENT);
+    res.service_fee_percent = PLATFORM_COMMISSION;
     res.service_fee_share = percentOf(res.final_payable_amount,
                                       PLATFORM_COMMISSION); // комісія платформи
     res.driver_net_earnings = res.final_payable_amount - res.service_fee_share;
