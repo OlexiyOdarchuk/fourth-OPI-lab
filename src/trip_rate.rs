@@ -260,8 +260,16 @@ impl RatingResult {
         })
     }
 
-    fn print_summary(&self, input: &RatingInput) {
-        let meta = self.tier.meta();
+    fn print_summary(input: Result<RatingInput, &'static str>) {
+        let (input, result) =
+            match input.and_then(|input| Self::process(&input).map(|result| (input, result))) {
+                Ok(value) => value,
+                Err(message) => {
+                    eprintln!("\n[ПОМИЛКА] {message}");
+                    return;
+                }
+            };
+        let meta = result.tier.meta();
 
         println!("\n========================================================");
         println!("          ПІДСУМКОВА КАРТКА ОЦІНЮВАННЯ ПОЇЗДКИ           ");
@@ -270,7 +278,7 @@ impl RatingResult {
         println!(" Водій:                {}", input.driver_name);
         println!(
             " Попередня історія:   {} поїздок (рейтинг {:.2})",
-            input.total_previous_trips, self.old_rating
+            input.total_previous_trips, result.old_rating
         );
 
         let stars = "*".repeat(input.trip_stars as usize);
@@ -290,14 +298,14 @@ impl RatingResult {
         }
         println!("--------------------------------------------------------");
 
-        let delta_sign = if self.rating_delta >= 0.0 { "+" } else { "" };
+        let delta_sign = if result.rating_delta >= 0.0 { "+" } else { "" };
         println!(
             " Оновлений рейтинг:   {:.3} (зміна: {delta_sign}{:.3})",
-            self.new_rating, self.rating_delta
+            result.new_rating, result.rating_delta
         );
-        println!(" Всього оцінок:        {}", self.updated_trip_count);
+        println!(" Всього оцінок:        {}", result.updated_trip_count);
 
-        println!(" Кваліфікаційний рівень: {}", self.tier);
+        println!(" Кваліфікаційний рівень: {}", result.tier);
         println!(" Статусний бейдж:      [{}]", meta.badge_title);
 
         let bonus_sign = if meta.dispatch_bonus_percent >= 0.0 {
@@ -326,14 +334,7 @@ pub fn run() {
     println!("  АС «ВИКЛИК ТАКСІ» - МОДУЛЬ ОЦІНЮВАННЯ ПОЇЗДКИ   ");
     println!("==================================================\n");
 
-    print_rating_result(RatingInput::read_from_stdin());
-}
-
-fn print_rating_result(input: Result<RatingInput, &'static str>) {
-    match input.and_then(|input| RatingResult::process(&input).map(|result| (input, result))) {
-        Ok((input, result)) => result.print_summary(&input),
-        Err(message) => eprintln!("\n[ПОМИЛКА] {message}"),
-    }
+    RatingResult::print_summary(RatingInput::read_from_stdin());
 }
 
 // Оцінювання поїздки з водієм, якого призначила система
@@ -343,7 +344,7 @@ pub(crate) fn rate_driver(
     current_rating: f64,
     total_previous_trips: u32,
 ) {
-    print_rating_result(RatingInput::read_trip_feedback(
+    RatingResult::print_summary(RatingInput::read_trip_feedback(
         driver_id.to_string(),
         driver_name.to_string(),
         current_rating,
