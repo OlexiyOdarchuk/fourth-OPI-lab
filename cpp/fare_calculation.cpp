@@ -1,7 +1,6 @@
 #include "fare_calculation.h"
 
 #include <algorithm>
-#include <cctype>
 #include <cmath>
 #include <cstdint>
 #include <iomanip>
@@ -45,30 +44,26 @@ TariffPlan getTariffPlan(Tariff tariff)
 Money evaluatePromoDiscount(const std::string &code, Money currentTotal,
                             std::string &msg)
 {
-    std::string c = code;
-    std::transform(c.begin(), c.end(), c.begin(), [](unsigned char ch) {
-        return std::toupper(ch);
-    });
-
-    if (c == "KNU2026" || c == "KNU") {
+    if (code == "KNU2026" || code == "KNU") {
         Money discount = percentOf(currentTotal, 20); // Знижка 20%
         msg = "Промокод [KNU2026] застосовано: знижка 20%";
         return discount;
-    } else if (c == "START" || c == "NEWUSER") {
+    } else if (code == "START" || code == "NEWUSER") {
         Money discount = 4000; // Фіксована знижка 40 грн
         if (discount > currentTotal / 2) {
             discount = currentTotal / 2;
             std::ostringstream oss;
-            oss << "Промокод [" << c << "] застосовано: знижка "
+            oss << "Промокод [" << code << "] застосовано: знижка "
                 << (discount / 100) << '.' << std::setfill('0') << std::setw(2)
                 << std::abs(discount % 100) << " грн";
 
             msg = oss.str();
         } else {
-            msg = "Промокод [" + c + "] застосовано: фіксована знижка 40 грн";
+            msg =
+                "Промокод [" + code + "] застосовано: фіксована знижка 40 грн";
         }
         return discount;
-    } else if (c == "-" || c == "NONE" || c == "НІ") {
+    } else if (code == "-" || code == "NONE" || code == "НІ") {
         msg = "Промокод не використовувався";
         return 0;
     } else {
