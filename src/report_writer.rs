@@ -25,10 +25,10 @@ impl ReportType {
     }
 }
 
-impl TryFrom<i64> for ReportType {
+impl TryFrom<u8> for ReportType {
     type Error = ();
 
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             1 => Ok(ReportType::All),
             2 => Ok(ReportType::Rides),
@@ -102,7 +102,7 @@ fn get_report_params() -> Option<ReportParams> {
         "\nОберіть тип звіту:\n1. Усі показники\n2. Замовлення\n3. Виручка\n4. Завантаженість водіїв"
     );
 
-    let choice: i64 = loop {
+    let choice: u8 = loop {
         let num = read_number("Ваш вибір (1-4): ", 1)?;
         if (1..=4).contains(&num) {
             break num;

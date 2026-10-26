@@ -111,7 +111,7 @@ fn read_trip_order() -> Option<TripOrder> {
     println!("  2 — Стандарт (подача 70 грн, 11.50 грн/км, 2.00 грн/хв, мін. 95 грн)");
     println!("  3 — Комфорт  (подача 85 грн, 14.00 грн/км, 2.50 грн/хв, мін. 120 грн)");
     println!("  4 — Бізнес   (подача 140 грн, 22.00 грн/км, 4.50 грн/хв, мін. 200 грн)");
-    let tariff = match read_line("Ваш вибір (1-4): ")?.parse::<u32>() {
+    let tariff = match read_line("Ваш вибір (1-4): ")?.parse::<u8>() {
         Ok(1) => Tariff::Economy,
         Ok(3) => Tariff::Comfort,
         Ok(4) => Tariff::Business,
@@ -148,18 +148,21 @@ pub(crate) fn read_trip_request(
             .unwrap_or(1.0);
 
     // Регістр зводиться тут: toupper у C++ не змінює кирилицю
-    let mut promo_code =
+    let promo_code =
         read_line("Введіть промокод на знижку (наприклад, KNU2026, або '-' якщо немає): ")?
             .to_uppercase();
-    if promo_code.is_empty() {
-        promo_code = "-".to_string();
-    }
+
+    let promo_code = if promo_code.is_empty() {
+        String::from("-")
+    } else {
+        promo_code
+    };
 
     println!("\nОберіть спосіб оплати:");
     println!("  1 — Банківська картка (онлайн токен)");
     println!("  2 — Готівка водію");
     println!("  3 — Apple Pay / Google Pay");
-    let payment_method = match read_line("Ваш вибір (1-3): ")?.parse::<u32>() {
+    let payment_method = match read_line("Ваш вибір (1-3): ")?.parse::<u8>() {
         Ok(2) => ffi::PaymentMethod::Cash,
         Ok(3) => ffi::PaymentMethod::MobilePay,
         _ => ffi::PaymentMethod::Card,
