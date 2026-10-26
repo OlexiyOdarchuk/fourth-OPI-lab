@@ -2,6 +2,9 @@ use std::fmt;
 
 use crate::input::read_line;
 
+// Мінімальна кількість оцінок, після якої водію присвоюється рівень
+const MIN_TRIPS_FOR_TIER: u32 = 10;
+
 // Категорії компліментів від пасажира
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum Compliment {
@@ -25,10 +28,10 @@ impl fmt::Display for Compliment {
     }
 }
 
-impl TryFrom<u32> for Compliment {
+impl TryFrom<u8> for Compliment {
     type Error = ();
 
-    fn try_from(value: u32) -> Result<Self, Self::Error> {
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             1 => Ok(Self::CleanCar),
             2 => Ok(Self::PoliteDriver),
@@ -57,13 +60,10 @@ struct TierMeta {
     is_warning_issued: bool,     // Прапорець критичного зниження рейтингу нижче порогу
 }
 
-// Мінімальна кількість оцінок, після якої водію присвоюється рівень
-const MIN_TRIPS_FOR_TIER: u32 = 10;
-
-const TRIP_COUNT_OVERFLOW: &str = "Кількість попередніх поїздок занадто висока.";
-
 fn next_trip_count(previous: u32) -> Result<u32, &'static str> {
-    previous.checked_add(1).ok_or(TRIP_COUNT_OVERFLOW)
+    previous
+        .checked_add(1)
+        .ok_or("Кількість попередніх поїздок занадто висока.")
 }
 
 fn read_rating_line(prompt: &str) -> Result<String, &'static str> {
@@ -76,9 +76,9 @@ impl DriverTier {
             return Self::Newcomer;
         }
         match rating {
-            r if r >= 4.90 => Self::Platinum,
-            r if r >= 4.75 => Self::Gold,
-            r if r >= 4.50 => Self::Standard,
+            _ if rating >= 4.90 => Self::Platinum,
+            _ if rating >= 4.75 => Self::Gold,
+            _ if rating >= 4.50 => Self::Standard,
             _ => Self::Risk,
         }
     }
@@ -132,7 +132,7 @@ struct RatingInput {
     driver_name: String,          // Повне ім'я водія
     current_rating: f64,          // Поточний рейтинг водія (від 1.0 до 5.0)
     total_previous_trips: u32,    // Кількість вже оцінених поїздок до цього
-    trip_stars: u32,              // Оцінка нової поїздки (від 1 до 5 зірок)
+    trip_stars: u8,               // Оцінка нової поїздки (від 1 до 5 зірок)
     compliments: Vec<Compliment>, // Список обраних компліментів (множинний вибір)
     comment: String,              // Текстовий відгук або побажання від клієнта
 }
@@ -140,27 +140,29 @@ struct RatingInput {
 impl RatingInput {
     fn read_from_stdin() -> Result<Self, &'static str> {
         let driver_id = read_rating_line("Введіть ідентифікатор водія (наприклад, DRV-1042): ")?;
-        if driver_id.is_empty() {
+        if driver_id.trim().is_empty() {
             return Err("Ідентифікатор водія не може бути порожнім.");
         };
-        let mut driver_name = read_rating_line("Введіть повне ім'я водія: ")?;
-        if driver_name.is_empty() {
-            driver_name = "Володимир Ковалюк".to_string();
-        };
 
-        let rating_str = read_rating_line("Введіть поточний рейтинг водія (від 1.00 до 5.00): ")?;
-        let current_rating: f64 = rating_str
-            .parse()
-            .map_err(|_| "Рейтинг має бути числом від 1.00 до 5.00; для дробової частини використовуйте крапку, наприклад 4.8.")?;
-        if !(1.00..=5.00).contains(&current_rating) {
-            return Err("Рейтинг має бути скінченним числом у межах [1.00; 5.00].");
-        };
+        let driver_name = read_rating_line("Введіть повне ім'я водія: ")
+            .ok()
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| String::from("Володимир Ковалюк"));
 
-        let trips_str =
-            read_rating_line("Введіть кількість оцінених поїздок водія до цього часу: ")?;
-        let total_previous_trips = trips_str
-            .parse::<u32>()
-            .map_err(|_| "Кількість поїздок має бути цілим невід'ємним числом.")?;
+        let current_rating: f64 =
+            read_rating_line("Введіть поточний рейтинг водія (від 1.00 до 5.00): ")?
+                .parse()
+                .map_err(|_| "Рейтинг має бути числом; для дробової частини використовуйте крапку, наприклад 4.8.")
+                .and_then(|r| if (1.00..=5.00).contains(&r) {
+                        Ok(r)
+                    } else {
+                        Err("Рейтинг має бути скінченним числом у межах [1.00; 5.00].")
+                    })?;
+
+        let total_previous_trips: u32 =
+            read_rating_line("Введіть кількість оцінених поїздок водія до цього часу: ")?
+                .parse()
+                .map_err(|_| "Кількість поїздок має бути цілим невід'ємним числом.")?;
 
         Self::read_trip_feedback(driver_id, driver_name, current_rating, total_previous_trips)
     }
@@ -172,15 +174,20 @@ impl RatingInput {
         current_rating: f64,
         total_previous_trips: u32,
     ) -> Result<Self, &'static str> {
+        // Не оновлюємо, бо потім зробимо це в proccess. Тільки викидаємо помилку, якщо вона є
         next_trip_count(total_previous_trips)?;
         println!("\n--- Оцінювання щойно завершеної поїздки ---");
-        let stars_str = read_rating_line("Поставте оцінку поїздці (від 1 до 5 зірок): ")?;
-        let trip_stars: u32 = stars_str
+
+        let trip_stars = read_rating_line("Поставте оцінку поїздці (від 1 до 5 зірок): ")?
             .parse()
-            .map_err(|_| "Оцінка поїздки має бути цілим числом від 1 до 5.")?;
-        if !(1..=5).contains(&trip_stars) {
-            return Err("Оцінка поїздки має бути цілим числом від 1 до 5.");
-        };
+            .map_err(|_| "Оцінка поїздки має бути цілим числом від 1 до 5.")
+            .and_then(|s| {
+                if (1..=5).contains(&s) {
+                    Ok(s)
+                } else {
+                    Err("Оцінка поїздки має бути цілим числом від 1 до 5.")
+                }
+            })?;
 
         println!(
             "\nОберіть категорії відгуку / компліменти (через пробіл або кому, наприклад '1 3'):"
@@ -201,7 +208,7 @@ impl RatingInput {
             .filter(|s| !s.is_empty())
         {
             match token
-                .parse::<u32>()
+                .parse::<u8>()
                 .ok()
                 .and_then(|val| Compliment::try_from(val).ok())
             {

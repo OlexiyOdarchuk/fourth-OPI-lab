@@ -26,7 +26,7 @@ fn main() {
             break;
         };
 
-        match line.parse::<u32>() {
+        match line.parse::<u8>() {
             Ok(1) => {
                 println!("\n--- [ МОДУЛЬ: ОЦІНКА ПОЇЗДКИ ] ---");
                 trip_rate::run();
