@@ -55,7 +55,12 @@ pub fn run(rides: &mut Vec<CompletedRide>) {
     let duration_minutes = driver_matching::estimated_time(distance_km);
     println!("Маршрут: {distance_km:.2} км, орієнтовний час у дорозі {duration_minutes:.0} хв");
     let Some(passenger_phone) = read_line("Введіть номер телефону пасажира (+380...): ")
+        .map(|s| s.trim().to_owned())
+        .filter(|s| {
+            s.len() == 13 && s.starts_with("+380") && s[4..].chars().all(|c| c.is_ascii_digit())
+        })
     else {
+        eprintln!("[ПОМИЛКА] Номер телефону має бути у форматі +380XXXXXXXXX.");
         return;
     };
     let Some(request) = fare_calculation::read_trip_request(

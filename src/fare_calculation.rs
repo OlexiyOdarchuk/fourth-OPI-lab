@@ -104,7 +104,11 @@ fn read_trip_order() -> Option<TripOrder> {
     if order_id.is_empty() {
         return None;
     }
-    let passenger_phone = read_line("Введіть номер телефону пасажира (+380...): ")?;
+    let passenger_phone = read_line("Введіть номер телефону пасажира (+380...): ")
+        .map(|s| s.trim().to_string())
+        .filter(|s| {
+            s.len() == 13 && s.starts_with("+380") && s[4..].chars().all(|c| c.is_ascii_digit())
+        })?;
 
     println!("\nОберіть тарифний план поїздки:");
     println!("  1 — Економ   (подача 55 грн, 9.50 грн/км, 1.80 грн/хв, мін. 80 грн)");
@@ -113,9 +117,10 @@ fn read_trip_order() -> Option<TripOrder> {
     println!("  4 — Бізнес   (подача 140 грн, 22.00 грн/км, 4.50 грн/хв, мін. 200 грн)");
     let tariff = match read_line("Ваш вибір (1-4): ")?.parse::<u8>() {
         Ok(1) => Tariff::Economy,
+        Ok(2) => Tariff::Standard,
         Ok(3) => Tariff::Comfort,
         Ok(4) => Tariff::Business,
-        _ => Tariff::Standard,
+        _ => return None,
     };
 
     let distance_km = read_positive(
